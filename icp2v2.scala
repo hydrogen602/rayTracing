@@ -124,7 +124,7 @@ def intersectionWithSphere(r0: (Double, Double, Double), r: (Double, Double, Dou
         else negativeSide
 }
 
-def intersectionWithPlane(r0: (Double, Double, Double), r: (Double, Double, Double), n: (Double, Double, Double), radius: Double): Double = {
+def intersectionWithPlane(r0: (Double, Double, Double), r: (Double, Double, Double), n: (Double, Double, Double), d: Double): Double = {
     /* 
      * r0   =   start point of ray
      * r =   direction from start
@@ -141,21 +141,31 @@ def intersectionWithPlane(r0: (Double, Double, Double), r: (Double, Double, Doub
      return (d - dot(n, r0)) / dot(n, r)
 }
 
-def intersection(r0: (Double, Double, Double), r: (Double, Double, Double), spheres: Array[Data], planes: Array[Data]) {
+def intersection(r0: (Double, Double, Double), r: (Double, Double, Double), spheres: Array[Data], planes: Array[Data]): Double = {
     def intersectionWithSphereFunc(s: Data): Double = {
         return intersectionWithSphere(r0, r, s.vector, s.d)
     }
 
-    val d = spheres.map(intersectionWithSphereFunc).min // object lost?
+    def intersectionWithPlaneFunc(p: Data): Double = {
+        return intersectionWithPlane(r0, r, p.vector, p.d)
+    }
 
-    for (p <- planes) {
-        intersectionWithPlane
+    def solutionExists(x: Double): Boolean = x >= 0 // funcs return -1 on failure, this weeds that out
+
+    val minDistancesSpheres: Double = spheres map intersectionWithSphereFunc filter solutionExists min
+    val minDistancesPlanes: Double = planes map intersectionWithPlaneFunc filter solutionExists min
+
+    return if (minDistancesPlanes < minDistancesSpheres) {
+        minDistancesPlanes
+    }
+    else {
+        minDistancesSpheres
     }
 }
 
 def main(): Int = {
     val r0: (Double, Double, Double) = getThreeValues("start of ray")
-    val rDir: (Double, Double, Double) = unitList(getThreeValues("dir of ray"))
+    val rDir: (Double, Double, Double) = unitVector(getThreeValues("dir of ray"))
 
     println(rDir)
 
@@ -171,6 +181,8 @@ def main(): Int = {
 
         val sp = new Data(center, radius)
 
+        println("debug " + intersection(r0, rDir, Array(sp), Array(sp)))
+
         val t = intersectionWithSphere(r0, rDir, center, radius)
 
         println()
@@ -178,7 +190,7 @@ def main(): Int = {
         println(s"distance = $t")
 
     } else if (planeOrSphere == "plane") {
-        val normalVec: (Double, Double, Double) = unitList(getThreeValues("normal vector"))
+        val normalVec: (Double, Double, Double) = unitVector(getThreeValues("normal vector"))
 
         val d: Double = getOneValue("distance")
 
