@@ -150,17 +150,15 @@ def intersection(r0: (Double, Double, Double), r: (Double, Double, Double), sphe
         return intersectionWithPlane(r0, r, p.vector, p.d)
     }
 
-    def solutionExists(x: Double): Boolean = x >= 0 // funcs return -1 on failure, this weeds that out
+    def solutionExists(x: (Double, Data)): Boolean = x._1 >= 0 // funcs return -1 on failure, this weeds that out
 
-    val minDistancesSpheres: Double = spheres map intersectionWithSphereFunc filter solutionExists min
-    val minDistancesPlanes: Double = planes map intersectionWithPlaneFunc filter solutionExists min
+    val minDistancesSpheres: Array[(Double, Data)] = spheres map intersectionWithSphereFunc zip spheres filter solutionExists //min
+    val minDistancesPlanes: Array[(Double, Data)] = planes map intersectionWithPlaneFunc zip planes filter solutionExists //min
 
-    return if (minDistancesPlanes < minDistancesSpheres) {
-        minDistancesPlanes
-    }
-    else {
-        minDistancesSpheres
-    }
+    for (i <- minDistancesPlanes) println(i)
+    for (i <- minDistancesSpheres) println(i)
+
+    return 0
 }
 
 def main(): Int = {
