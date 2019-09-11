@@ -1,6 +1,12 @@
 
 import io.StdIn._
 
+class Data(args: (Double, Double, Double), dArg: Double) {
+    val vector: (Double, Double, Double) = args
+    val d: Double = dArg
+}
+
+
 def getThreeValues(prompt: String): (Double, Double, Double) = {
     print(prompt + " ")
     val ln = readLine
@@ -135,7 +141,17 @@ def intersectionWithPlane(r0: (Double, Double, Double), r: (Double, Double, Doub
      return (d - dot(n, r0)) / dot(n, r)
 }
 
-def intersection(r0: (Double, Double, Double), r: (Double, Double, Double), )
+def intersection(r0: (Double, Double, Double), r: (Double, Double, Double), spheres: Array[Data], planes: Array[Data]) {
+    def intersectionWithSphereFunc(s: Data): Double = {
+        return intersectionWithSphere(r0, r, s.vector, s.d)
+    }
+
+    val d = spheres.map(intersectionWithSphereFunc).min // object lost?
+
+    for (p <- planes) {
+        intersectionWithPlane
+    }
+}
 
 def main(): Int = {
     val r0: (Double, Double, Double) = getThreeValues("start of ray")
@@ -153,6 +169,8 @@ def main(): Int = {
 
         val radius: Double = getOneValue("radius")
 
+        val sp = new Data(center, radius)
+
         val t = intersectionWithSphere(r0, rDir, center, radius)
 
         println()
@@ -160,11 +178,13 @@ def main(): Int = {
         println(s"distance = $t")
 
     } else if (planeOrSphere == "plane") {
-        val normalList: (Double, Double, Double) = unitList(getThreeValues("normal vector"))
+        val normalVec: (Double, Double, Double) = unitList(getThreeValues("normal vector"))
 
         val d: Double = getOneValue("distance")
 
-        val t: Double = intersectionWithPlane(r0, rDir, normalList, d)
+        val pl = new Data(normalVec, d)
+
+        val t: Double = intersectionWithPlane(r0, rDir, normalVec, d)
 
         println()
 
