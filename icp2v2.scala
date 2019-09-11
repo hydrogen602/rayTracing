@@ -155,8 +155,25 @@ def intersection(r0: (Double, Double, Double), r: (Double, Double, Double), sphe
     val minDistancesSpheres: Array[(Double, Data)] = spheres map intersectionWithSphereFunc zip spheres filter solutionExists //min
     val minDistancesPlanes: Array[(Double, Data)] = planes map intersectionWithPlaneFunc zip planes filter solutionExists //min
 
-    for (i <- minDistancesPlanes) println(i)
-    for (i <- minDistancesSpheres) println(i)
+    def compareFunc(it: Iterator[(Double, Data)], lowestDis: (Double, Data)): (Double, Data) = {
+        if (it.hasNext) {
+            val next: (Double, Data) = it.next()
+            if (next._1 < lowestDis._1) {
+                return compareFunc(it, next)
+            }
+            return compareFunc(it, lowestDis)
+        }
+        return lowestDis
+    }
+
+    def compare(dat: Array[(Double, Data)]): (Double, Data) = {
+        compareFunc(dat.iterator, (Double.PositiveInfinity, new Data(null, 0)))
+    }
+
+    val a1 = compare(minDistancesSpheres)
+    println(s"d = ${a1._2}, p = ${a1._1}")
+    val a2 = compare(minDistancesPlanes)
+    println(s"d = ${a2._2}, p = ${a2._1}")
 
     return 0
 }
