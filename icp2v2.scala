@@ -131,7 +131,7 @@ def intersectionWithPlane(r0: (Double, Double, Double), r: (Double, Double, Doub
      */
 
      // see CS notebook for math
-
+ 
      return (d - dot(n, r0)) / dot(n, r)
 }
 
