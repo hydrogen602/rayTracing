@@ -171,9 +171,9 @@ def intersection(r0: (Double, Double, Double), r: (Double, Double, Double), sphe
     }
 
     val a1 = compare(minDistancesSpheres)
-    println(s"d = ${a1._2}, p = ${a1._1}")
+    println(s"d = ${a1._1}, p = ${a1._2}")
     val a2 = compare(minDistancesPlanes)
-    println(s"d = ${a2._2}, p = ${a2._1}")
+    println(s"d = ${a2._1}, p = ${a2._2}")
 
     return 0
 }
