@@ -131,9 +131,11 @@ def intersectionWithPlane(r0: (Double, Double, Double), r: (Double, Double, Doub
      */
 
      // see CS notebook for math
- 
+
      return (d - dot(n, r0)) / dot(n, r)
 }
+
+def intersection(r0: (Double, Double, Double), r: (Double, Double, Double), )
 
 def main(): Int = {
     val r0: (Double, Double, Double) = getThreeValues("start of ray")
