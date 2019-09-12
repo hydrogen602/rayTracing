@@ -1,13 +1,15 @@
 
 import io.StdIn._
 
-class Data(args: (Double, Double, Double), dArg: Double) {
-    val vector: (Double, Double, Double) = args
+type Vect3 = (Double,Double,Double)
+
+class Data(args: Vect3, dArg: Double) {
+    val vector: Vect3 = args
     val d: Double = dArg
 }
 
 
-def getThreeValues(prompt: String): (Double, Double, Double) = {
+def getThreeValues(prompt: String): Vect3 = {
     print(prompt + " ")
     val ln = readLine
     val dataStr: Array[String] = ln.split(" ")
@@ -49,33 +51,33 @@ def getOneValue(prompt: String): Double = {
     return getOneValue(prompt)
 }
 
-def scale(ls: (Double, Double, Double), t: Double): (Double, Double, Double) = {
+def scale(ls: Vect3, t: Double): Vect3 = {
 
     return (ls._1 * t, ls._2 * t, ls._3 * t)
 }
 
-def addition(a: (Double, Double, Double), b: (Double, Double, Double)): (Double, Double, Double)  = {
+def addition(a: Vect3, b: Vect3): Vect3  = {
 
     return (a._1 + b._1, a._2 + b._2, a._3 + b._3)
 }
 
-def dot(a: (Double, Double, Double), b: (Double, Double, Double)): Double = {
+def dot(a: Vect3, b: Vect3): Double = {
 
     return a._1 * b._1 + a._2 * b._2 + a._3 * b._3
 }
 
-def squareOfMag(a: (Double, Double, Double)): Double = {
+def squareOfMag(a: Vect3): Double = {
     return dot(a, a)
 }
 
-def unitVector(v: (Double,Double,Double)): (Double, Double, Double) = {
+def unitVector(v: (Double,Double,Double)): Vect3 = {
 
     val mag = math.sqrt(squareOfMag(v))
 
     return (v._1 / mag, v._2 / mag, v._3 / mag)
 }
 
-def intersectionWithSphere(r0: (Double, Double, Double), r: (Double, Double, Double), n: (Double, Double, Double), radius: Double): Double = {
+def intersectionWithSphere(r0: Vect3, r: Vect3, n: Vect3, radius: Double): Double = {
     /* 
      * r0   =   start point of ray
      * r =   direction from start
@@ -88,7 +90,6 @@ def intersectionWithSphere(r0: (Double, Double, Double), r: (Double, Double, Dou
      */
 
     // r0 + r * t is the point of the tip of the ray
-
 
     // see CS notebook for math
 
@@ -124,7 +125,7 @@ def intersectionWithSphere(r0: (Double, Double, Double), r: (Double, Double, Dou
         else negativeSide
 }
 
-def intersectionWithPlane(r0: (Double, Double, Double), r: (Double, Double, Double), n: (Double, Double, Double), d: Double): Double = {
+def intersectionWithPlane(r0: Vect3, r: Vect3, n: Vect3, d: Double): Double = {
     /* 
      * r0   =   start point of ray
      * r =   direction from start
@@ -133,27 +134,22 @@ def intersectionWithPlane(r0: (Double, Double, Double), r: (Double, Double, Doub
      * returns scalar t that satisfies r(t) * n = d
      * where r(t) is r0 + r * t
      *
-     * 
      */
 
      // see CS notebook for math
-
      return (d - dot(n, r0)) / dot(n, r)
 }
 
-def intersection(r0: (Double, Double, Double), r: (Double, Double, Double), spheres: Array[Data], planes: Array[Data]): Double = {
-    def intersectionWithSphereFunc(s: Data): Double = {
-        return intersectionWithSphere(r0, r, s.vector, s.d)
-    }
+def intersection(r0: Vect3, r: Vect3, spheres: Array[Data], planes: Array[Data]): Data = {
 
-    def intersectionWithPlaneFunc(p: Data): Double = {
-        return intersectionWithPlane(r0, r, p.vector, p.d)
-    }
+    val intersectionWithSphereFunc = (s: Data) => intersectionWithSphere(r0, r, s.vector, s.d)
 
-    def solutionExists(x: (Double, Data)): Boolean = x._1 >= 0 // funcs return -1 on failure, this weeds that out
+    val intersectionWithPlaneFunc = (p: Data) => intersectionWithPlane(r0, r, p.vector, p.d)
 
-    val minDistancesSpheres: Array[(Double, Data)] = spheres map intersectionWithSphereFunc zip spheres filter solutionExists //min
-    val minDistancesPlanes: Array[(Double, Data)] = planes map intersectionWithPlaneFunc zip planes filter solutionExists //min
+    val solutionExists = (x: (Double, Data)) => x._1 >= 0 // funcs return -1 on failure, this weeds that out
+
+    val distancesAndSpheres: Array[(Double, Data)] = spheres map intersectionWithSphereFunc zip spheres filter solutionExists //min
+    val distancesAndPlanes: Array[(Double, Data)] = planes map intersectionWithPlaneFunc zip planes filter solutionExists //min
 
     def compareFunc(it: Iterator[(Double, Data)], lowestDis: (Double, Data)): (Double, Data) = {
         if (it.hasNext) {
@@ -166,21 +162,17 @@ def intersection(r0: (Double, Double, Double), r: (Double, Double, Double), sphe
         return lowestDis
     }
 
-    def compare(dat: Array[(Double, Data)]): (Double, Data) = {
-        compareFunc(dat.iterator, (Double.PositiveInfinity, new Data(null, 0)))
-    }
+    val compare = (dat: Array[(Double, Data)]) => compareFunc(dat.iterator, (Double.PositiveInfinity, new Data(null, 0)))
 
-    val a1 = compare(minDistancesSpheres)
-    println(s"d = ${a1._1}, p = ${a1._2}")
-    val a2 = compare(minDistancesPlanes)
-    println(s"d = ${a2._1}, p = ${a2._2}")
+    val closestSphere: (Double, Data) = compare(distancesAndSpheres)
+    val closestPlane: (Double, Data) = compare(distancesAndPlanes)
 
-    return 0
+    return if (closestSphere._1 < closestPlane._1) closestSphere._2 else closestPlane._2
 }
 
 def main(): Int = {
-    val r0: (Double, Double, Double) = getThreeValues("start of ray")
-    val rDir: (Double, Double, Double) = unitVector(getThreeValues("dir of ray"))
+    val r0: Vect3 = getThreeValues("start of ray")
+    val rDir: Vect3 = unitVector(getThreeValues("dir of ray"))
 
     println(rDir)
 
@@ -190,7 +182,7 @@ def main(): Int = {
 
 
     if (planeOrSphere == "sphere") {
-        val center: (Double, Double, Double) = getThreeValues("center")
+        val center: Vect3 = getThreeValues("center")
 
         val radius: Double = getOneValue("radius")
 
@@ -205,7 +197,7 @@ def main(): Int = {
         println(s"distance = $t")
 
     } else if (planeOrSphere == "plane") {
-        val normalVec: (Double, Double, Double) = unitVector(getThreeValues("normal vector"))
+        val normalVec: Vect3 = unitVector(getThreeValues("normal vector"))
 
         val d: Double = getOneValue("distance")
 
