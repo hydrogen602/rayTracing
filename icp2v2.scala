@@ -133,7 +133,7 @@ def intersectionWithPlane(r0: Vect3, r: Vect3, pl: Data): Double = {
      return (d - dot(n, r0)) / dot(n, r)
 }
 
-def intersection(r0: Vect3, r: Vect3, objects: Array[Data]): Data = {
+def intersection(r0: Vect3, r: Vect3, objects: Array[Data]): (Double, Data) = {
 
     def intersectionFunc(dat: Data): Double = {
         return dat match {
@@ -161,7 +161,7 @@ def intersection(r0: Vect3, r: Vect3, objects: Array[Data]): Data = {
 
     val closestObject: (Double, Data) = compare(distances)
 
-    return closestObject._2
+    return closestObject
 }
 
 def main(): Int = {
@@ -174,30 +174,30 @@ def main(): Int = {
     val input = readLine.toLowerCase
     val planeOrSphere = if (input.startsWith("p")) "plane" else if (input.startsWith("s")) "sphere" else "null"
 
-
-    if (planeOrSphere == "sphere") {
-        val center: Vect3 = getThreeValues("center")
-
-        val radius: Double = getOneValue("radius")
-
-        val sp = Sphere(center, radius)
-
-        println("debug " + intersection(r0, rDir, Array(sp)))
-
-    } else if (planeOrSphere == "plane") {
-        val normalVec: Vect3 = unitVector(getThreeValues("normal vector"))
-
-        val d: Double = getOneValue("distance")
-
-        val pl = Plane(normalVec, d)
-
-        println("debug " + intersection(r0, rDir, Array(pl)))
-
-    } else if (planeOrSphere == "null") {
+    if (planeOrSphere != "sphere" && planeOrSphere != "plane") {
         println("You have failed at choosing plane or sphere")
         println("Exiting...")
         return -1
     }
+
+    val obj = if (planeOrSphere == "sphere") {
+        val center: Vect3 = getThreeValues("center")
+
+        val radius: Double = getOneValue("radius")
+
+        Sphere(center, radius)
+
+    } else {
+        val normalVec: Vect3 = unitVector(getThreeValues("normal vector"))
+
+        val d: Double = getOneValue("distance")
+
+        Plane(normalVec, d)
+    }
+
+    val x: (Double, Data) = intersection(r0, rDir, Array(obj))
+    println(s"Closest Object is at distance ${x._1}")
+
 
     return 0
 }
