@@ -97,7 +97,7 @@ def intersectionWithSphere(r0: Vect3, r: Vect3, sp: Data): Double = {
     //          2a
 
     val thingInSquareRoot = b * b - 4 * a * c
-    println(thingInSquareRoot)
+    //println(thingInSquareRoot)
 
     if (thingInSquareRoot < 0) {
         // no solution
