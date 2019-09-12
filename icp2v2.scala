@@ -54,6 +54,8 @@ def scale(v: Vect3, t: Double): Vect3 = Vect3(v.x * t, v.y * t, v.z * t)
 
 def addition(a: Vect3, b: Vect3): Vect3 = Vect3(a.x + b.x, a.y + b.y, a.z + b.z)
 
+def cross(a: Vect3, b: Vect3): Vect3 = Vect3(a.y * b.z - a.z * b.y, -(a.x * b.z - a.z * b.x), a.x * b.y - a.y * b.x)
+
 def dot(a: Vect3, b: Vect3): Double = a.x * b.x + a.y * b.y + a.z * b.z
 
 def squareOfMag(a: Vect3): Double = dot(a, a)
@@ -203,8 +205,6 @@ def main(): Int = {
     val newObjectFunc = (unused: Int) => newObject()
 
     val objects: Array[Data] = (0 until numOfObjects map newObjectFunc).toArray
-
-    //val obj = newObject()
 
     val x: (Double, Data) = intersection(r0, rDir, objects)
     println(s"Closest Object is at distance ${x._1}")
