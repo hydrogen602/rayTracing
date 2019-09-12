@@ -50,7 +50,7 @@ def getOneValue(prompt: String): Double = {
     return getOneValue(prompt)
 }
 
-def scale(v: Vect3, t: Double): Data = Vect3(v.x * t, v.y * t, v.z * t)
+def scale(v: Vect3, t: Double): Vect3 = Vect3(v.x * t, v.y * t, v.z * t)
 
 def addition(a: Vect3, b: Vect3): Vect3 = Vect3(a.x + b.x, a.y + b.y, a.z + b.z)
 
@@ -79,9 +79,10 @@ def intersectionWithSphere(r0: Vect3, r: Vect3, sp: Data): Double = {
     // r0 + r * t is the point of the tip of the ray
 
     // see CS notebook for math
-
-    val n = sp.vect
-    val radius = sp.d
+    val (n, radius) = sp match {
+        case Sphere(vect, d) => (vect, d)
+        case _ => return -1
+    }
 
     // components of quadratic equation
     // ax^2 + bx + c = 0
@@ -127,8 +128,10 @@ def intersectionWithPlane(r0: Vect3, r: Vect3, pl: Data): Double = {
      */
 
      // see CS notebook for math
-     val n = pl.vect
-     val d = pl.d
+     val (n, d) = pl match {
+        case Plane(vect, d) => (vect, d)
+        case _ => return -1
+    }
 
      return (d - dot(n, r0)) / dot(n, r)
 }
