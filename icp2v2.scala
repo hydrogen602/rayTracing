@@ -167,23 +167,16 @@ def intersection(r0: Vect3, r: Vect3, objects: Array[Data]): (Double, Data) = {
     return closestObject
 }
 
-def main(): Int = {
-    val r0: Vect3 = getThreeValues("start of ray")
-    val rDir: Vect3 = unitVector(getThreeValues("dir of ray"))
-
-    println(rDir)
-
+def newObject(): Data = {
     print("Plane or Sphere? ")
     val input = readLine.toLowerCase
     val planeOrSphere = if (input.startsWith("p")) "plane" else if (input.startsWith("s")) "sphere" else "null"
 
     if (planeOrSphere != "sphere" && planeOrSphere != "plane") {
-        println("You have failed at choosing plane or sphere")
-        println("Exiting...")
-        return -1
+        throw new Exception("You have failed at choosing plane or sphere")
     }
 
-    val obj = if (planeOrSphere == "sphere") {
+    return if (planeOrSphere == "sphere") {
         val center: Vect3 = getThreeValues("center")
 
         val radius: Double = getOneValue("radius")
@@ -197,10 +190,24 @@ def main(): Int = {
 
         Plane(normalVec, d)
     }
+}
 
-    val x: (Double, Data) = intersection(r0, rDir, Array(obj))
+def main(): Int = {
+    val r0: Vect3 = getThreeValues("start of ray")
+    val rDir: Vect3 = unitVector(getThreeValues("dir of ray"))
+
+    println(rDir)
+
+    val numOfObjects: Int = getOneValue("Number of objects").toInt
+
+    val newObjectFunc = (unused: Int) => newObject()
+
+    val objects: Array[Data] = (0 until numOfObjects map newObjectFunc).toArray
+
+    //val obj = newObject()
+
+    val x: (Double, Data) = intersection(r0, rDir, objects)
     println(s"Closest Object is at distance ${x._1}")
-
 
     return 0
 }
