@@ -7,6 +7,8 @@ abstract class Data
 case class Plane(vect: Vect3, d: Double) extends Data
 case class Sphere(vect: Vect3, d: Double) extends Data
 
+case class Scene(objects: List[Data])
+
 
 def getThreeValues(prompt: String): Vect3 = {
     print(prompt + " ")
@@ -122,7 +124,7 @@ def intersectionWithPlane(r0: Vect3, r: Vect3, pl: Data): Double = {
      return (d - dot(n, r0)) / dot(n, r)
 }
 
-def intersection(r0: Vect3, r: Vect3, objects: Array[Data]): (Double, Data) = {
+def intersection(r0: Vect3, r: Vect3, sc: Scene): (Double, Data) = {
 
     def intersectionFunc(dat: Data): Double = {
         return dat match {
@@ -133,7 +135,7 @@ def intersection(r0: Vect3, r: Vect3, objects: Array[Data]): (Double, Data) = {
 
     val solutionExists = (x: (Double, Data)) => x._1 >= 0 // funcs return -1 on failure, this weeds that out
 
-    val distances: Array[(Double, Data)] = objects map intersectionFunc zip objects filter solutionExists //min
+    val distances: List[(Double, Data)] = sc.objects map intersectionFunc zip sc.objects filter solutionExists //min
 
     val minFunc = (a: (Double, Data), b: (Double, Data)) => if (a._1 < b._1) a else b
 
@@ -160,7 +162,7 @@ def unitVector(v: Vect3): Vect3 = {
     return Vect3(v.x / mag, v.y / mag, v.z / mag)
 }
 
-def rayTrace(raySource: Vect3, forward: Vect3, up: Vect3, objects: Array[Data], heightOrWidthPixel: Int): Unit = {
+def rayTrace(raySource: Vect3, forward: Vect3, up: Vect3, sc: Scene, heightOrWidthPixel: Int): Unit = {
     // forward and up should be unit vectors
     if (squareOfMag(forward) != 1 || squareOfMag(up) != 1) {
         throw new Exception("Forward and Up must be unit vectors")
@@ -211,7 +213,7 @@ def rayTrace(raySource: Vect3, forward: Vect3, up: Vect3, objects: Array[Data], 
 
         val rayDir = unitVector(sub(point, raySource))
 
-        val (t, obj) = intersection(raySource, rayDir, objects)
+        val (t, obj) = intersection(raySource, rayDir, sc)
 
         allValuesT(i)(j) = t
 
@@ -237,9 +239,9 @@ def main(): Unit = {
     val up: Vect3 = getThreeValues("Up Vector")
     val forward: Vect3 = getThreeValues("Forward Vector")
 
-    val objects: Array[Data] = Array(Sphere(Vect3(0,0,0), 6))
+    val sc: Scene = Scene(List(Sphere(Vect3(0,0,0), 6)))
 
-    rayTrace(Vect3(10, 0, 0), forward, up, objects, 15)
+    rayTrace(Vect3(10, 0, 0), forward, up, sc, 15)
 }
 
 main()
