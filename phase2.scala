@@ -9,6 +9,7 @@ case class Sphere(vect: Vect3, d: Double) extends Data
 
 case class Scene(objects: List[Data])
 
+// p. 397
 
 def getThreeValues(prompt: String): Vect3 = {
     print(prompt + " ")
