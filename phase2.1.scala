@@ -19,14 +19,15 @@ case class Vect3(x: Double, y: Double, z: Double)
 
 // Geometric Objects
 abstract class Data
-case class Plane(vect: Vect3, d: Double) extends Data
-case class Sphere(vect: Vect3, d: Double) extends Data
+case class Plane(vect: Vect3, d: Double, color: DColor) extends Data
+case class Sphere(vect: Vect3, d: Double, color: DColor) extends Data
 
 // Collection of Objects
 case class SceneObjects(objects: List[Data])
 
+case class DColor(r: Double, g: Double, b: Double)
 // Light ray with color
-case class Ray(src: Vect3, dir: Vect3, Color: (Int, Int, Int))
+case class Ray(src: Vect3, dir: Vect3, color: DColor)
 
 
 // Input functions
@@ -86,8 +87,8 @@ def intersectionWithSphere(r: Ray, sp: Data): Double = {
     // r0 + r * t is the point of the tip of the ray
 
     // see CS notebook for math
-    val (n, radius) = sp match {
-        case Sphere(vect, d) => (vect, d)
+    val (n, radius, color) = sp match {
+        case Sphere(vect, d, color) => (vect, d, color)
         case _ => return -1
     }
 
@@ -135,8 +136,8 @@ def intersectionWithPlane(r: Ray, pl: Data): Double = {
      */
 
      // see CS notebook for math
-     val (n, d) = pl match {
-        case Plane(vect, d) => (vect, d)
+     val (n, d, color) = pl match {
+        case Plane(vect, d, color) => (vect, d, color)
         case _ => return -1
     }
 
@@ -147,8 +148,8 @@ def intersection(r: Ray, sc: SceneObjects): (Double, Data) = {
 
     def intersectionFunc(dat: Data): Double = {
         return dat match {
-            case Sphere(_, _) => intersectionWithSphere(r, dat)
-            case Plane(_, _) => intersectionWithPlane(r, dat)
+            case Sphere(_, _, _) => intersectionWithSphere(r, dat)
+            case Plane(_, _, _) => intersectionWithPlane(r, dat)
         }
     }
 
@@ -229,7 +230,7 @@ def rayTrace(raySource: Vect3, forward: Vect3, up: Vect3, sc: SceneObjects, heig
 
         val point = add(assembleRayDir(i, j), topLeftCorner)
 
-        val ray: Ray = Ray(raySource, unitVector(sub(point, raySource)), (255, 255, 255))
+        val ray: Ray = Ray(raySource, unitVector(sub(point, raySource)), DColor(255, 255, 255))
 
         val (t, obj) = intersection(ray, sc)
 
@@ -259,7 +260,10 @@ def main(): Unit = {
     val up: Vect3 = getThreeValues("Up Vector")
     val forward: Vect3 = getThreeValues("Forward Vector")
 
-    val sc: SceneObjects = SceneObjects(List(Sphere(Vect3(0,0,0), 70), Plane(Vect3(1, 0, 3), 0)))
+    val sc: SceneObjects = SceneObjects(List(
+        Sphere(Vect3(0,0,0), 70, DColor(255, 0, 0)), 
+        Plane(Vect3(1, 0, 3), 0, DColor(0, 255, 0))
+    ))
 
     val allT: Array[Array[Double]] = rayTrace(Vect3(100, 0, 0), forward, up, sc, side)
 
@@ -278,13 +282,14 @@ def main(): Unit = {
 
     val fixNeg = (d: Double) => if (d < 0) 0 else if (d > 255) 255 else d.toInt
 
-    val assembleRGB = (r: Int, g: Int, b: Int) => r << 16 | g << 8 | b
+
+    val assembleRGB = (c: DColor) => c.r.toInt << 16 | c.g.toInt << 8 | c.b.toInt
 
     println(s"${allT.size}, ${allT(0).size}")
 
     for (i <- 0 until side; j <- 0 until side) {
-        val c: Int = fixNeg(disToColor(allT(i)(j)))
-        img.setRGB(i, j, assembleRGB(c, c, c))
+        val c: DColor = DColor(fixNeg(disToColor(allT(i)(j))), 0, 0)
+        img.setRGB(i, j, assembleRGB(c))
     }
 
     val w: WritableImage = new WritableImage(side, side)
@@ -295,7 +300,7 @@ def main(): Unit = {
 
     val app = new JFXApp {
         stage = new JFXApp.PrimaryStage {
-            title = "First GUI"
+            title = "Ray Tracing 2.1"
             scene = new Scene(side.toDouble, side.toDouble) {
                 //fill = Color.Coral
                 //val button = new Button("Click me!")
