@@ -1,4 +1,48 @@
 
+// Input functions
+
+def getThreeValues(prompt: String): Vect3 = {
+    print(prompt + " ")
+    val ln = readLine
+    val dataStr: Array[String] = ln.split(" ")
+
+    if (dataStr.length != 3) {
+        println("Y are you so bad at life")
+        println(dataStr(0) +" "+ dataStr(1) +" "+ dataStr(2))
+        return getThreeValues(prompt)
+    }
+
+    try {
+        val nums: Array[Double] = dataStr.map(_.trim.toDouble)
+        return Vect3(nums(0), nums(1), nums(2))
+    }
+    catch {
+        case x: NumberFormatException => {
+            println("Y are you so bad at life")
+            println(dataStr(0) +" "+ dataStr(1) +" "+ dataStr(2))
+        }
+    }
+    return getThreeValues(prompt)
+}
+
+def getOneValue(prompt: String): Double = {
+    print(prompt + ": ")
+    val ln = readLine
+
+    try {
+        return ln.trim.toDouble
+    }
+    catch {
+        case x: NumberFormatException => {
+            println("Y are you so bad at life")
+            println(ln)
+        }
+    }
+    return getOneValue(prompt)
+}
+
+
+
 class DColor(rArg: Double, gArg: Double, bArg: Double) {
 
     val r = rArg
@@ -143,25 +187,80 @@ class Sphere(centerArg: Vect3, radiusArg: Double, color: DColor) extends Geometr
     override def toString(): String = "Sphere"
 }
 
+class Grid(raySource: Vect3, forwardArg: Vect3, upArg: Vect3, sideArg: Int) {
+    require(forwardArg.squareOfMag == 1 && upArg.squareOfMag == 1)
+
+    val src: Vect3 = raySource
+    val forward: Vect3 = forwardArg
+    val up: Vect3 = upArg
+    val left: Vect3 = up x forward
+
+    val side: Int = sideArg
+
+    val centerOfPixelGrid = raySource + forward
+
+    val topLeftCorner = centerOfPixelGrid + up + left
+    val bottomRightCorner = centerOfPixelGrid - up - left
+
+    val scalar = side - 1
+    /*
+     * Think of a grid. It has squares, but for simplicity I'm going to shoot the rays
+     * at the corners of the box. Now there is one less square lengthwise than there
+     * are corners between the squares, and so that is why I'm subtracting one here.
+     * 
+     *   X--X--X   Note: There are 3 corners (X) across, but 2 line segments (--)
+     *   |  |  |     So I need to divide the side of the square grid by 2
+     *   X--X--X     instead of 3 to get the distance between corners.
+     *   |  |  | 
+     *   X--X--X 
+     */
+
+    val rightStepVector = (-left * 2) / scalar
+    val downStepVector = (-up * 2) / scalar
+
+    def getPoint(i: Int, j: Int): Vect3 = {
+        // returns the x, y, z of point (i, j) in the grid
+        topLeftCorner + (rightStepVector * j) + (downStepVector * i)
+    }
+
+    def rayTrace(ray: Ray, objects: Array[GeometricObject]): Array[Array[Double]] = {
+        val allValuesT = Array.ofDim[Double](side, side)
+
+        for (i <- 0 until side; j <- 0 until side) {
+
+            val point = getPoint(i, j)
+
+            val (t, obj) = ray.trace(objects)
+
+            allValuesT(i)(j) = t
+
+            //println(s"i = $i, j = $j")
+            //println(s"${point.x}, ${point.y}, ${point.z}")
+        }
+
+        return allValuesT
+    }
+}
+
 class Ray(srcArg: Vect3, dirArg: Vect3, color: DColor) {
     val src: Vect3 = srcArg
     val dir: Vect3 = dirArg.normalize
     val c: DColor = color
 
-    /*
     def trace(objects: Array[GeometricObject]): (Double, GeometricObject) = {
 
         def intersectionFunc(geometry: GeometricObject): Double = {
             geometry.intersection(this)
         }
 
-        val solutionExists = (x: (Double, Data)) => x._1 >= 0 // funcs return -1 on failure, this weeds that out
+        //val solutionExists = (x: (Double, GeometricObject)) => x._1 >= 0 // funcs return -1 on failure, this weeds that out
 
-        val distances: List[(Double, Data)] = sc.objects map intersectionFunc zip sc.objects filter solutionExists //min
+        val distances: Array[(Double, GeometricObject)] = objects map intersectionFunc zip objects filter (_._1 >= 0) // solutionExists
 
-        val minFunc = (a: (Double, Data), b: (Double, Data)) => if (a._1 < b._1) a else b
+        val minFunc = (a: (Double, GeometricObject), b: (Double, GeometricObject)) => if (a._1 < b._1) a else b
 
         return if (distances.length > 0) distances.reduce(minFunc) else (-1, null)
-    }*/
+    }
 }
 
+// custom interators(?),
