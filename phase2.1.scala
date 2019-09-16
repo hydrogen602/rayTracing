@@ -141,7 +141,8 @@ def intersectionWithPlane(r: Ray, pl: Data): Double = {
         case _ => return -1
     }
 
-     return (d - dot(n, r.src)) / dot(n, r.dir)
+    val tmp = (d - dot(n, r.src)) / dot(n, r.dir)
+    return if (tmp == Double.PositiveInfinity || tmp == Double.NegativeInfinity) -1 else tmp
 }
 
 def intersection(r: Ray, sc: SceneObjects): (Double, Data) = {
