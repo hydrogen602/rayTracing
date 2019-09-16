@@ -174,7 +174,7 @@ def cross(a: Vect3, b: Vect3): Vect3 = Vect3(a.y * b.z - a.z * b.y, -(a.x * b.z 
 
 def dot(a: Vect3, b: Vect3): Double = a.x * b.x + a.y * b.y + a.z * b.z
 
-def squareOfMag(a: Vect3): Double = dot(a, a)
+def squareOfMag(a: Vect3): Double = a * a
 
 def unitVector(v: Vect3): Vect3 = {
     val mag = math.sqrt(squareOfMag(v))
