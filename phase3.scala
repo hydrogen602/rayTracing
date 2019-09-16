@@ -1,3 +1,13 @@
+import scalafx.application.JFXApp
+import scalafx.scene.Scene
+import scalafx.scene.paint.Color
+import scalafx.scene.control.Button
+import scalafx.scene.image.Image
+
+import javafx.embed.swing
+import scalafx.scene.image.{Image, WritableImage, ImageView}
+
+import java.awt.image.BufferedImage
 
 // Input functions
 
@@ -14,7 +24,7 @@ def getThreeValues(prompt: String): Vect3 = {
 
     try {
         val nums: Array[Double] = dataStr.map(_.trim.toDouble)
-        return Vect3(nums(0), nums(1), nums(2))
+        return new Vect3(nums(0), nums(1), nums(2))
     }
     catch {
         case x: NumberFormatException => {
@@ -40,8 +50,6 @@ def getOneValue(prompt: String): Double = {
     }
     return getOneValue(prompt)
 }
-
-
 
 class DColor(rArg: Double, gArg: Double, bArg: Double) {
 
@@ -223,12 +231,14 @@ class Grid(raySource: Vect3, forwardArg: Vect3, upArg: Vect3, sideArg: Int) {
         topLeftCorner + (rightStepVector * j) + (downStepVector * i)
     }
 
-    def rayTrace(ray: Ray, objects: Array[GeometricObject]): Array[Array[Double]] = {
+    def rayTrace(objects: Array[GeometricObject]): Array[Array[Double]] = {
         val allValuesT = Array.ofDim[Double](side, side)
 
         for (i <- 0 until side; j <- 0 until side) {
 
             val point = getPoint(i, j)
+
+            val ray = new Ray(src, point - src, new DColor(0, 0, 0))
 
             val (t, obj) = ray.trace(objects)
 
@@ -264,3 +274,67 @@ class Ray(srcArg: Vect3, dirArg: Vect3, color: DColor) {
 }
 
 // custom interators(?),
+
+
+def main(): Unit = {
+    val side: Int = 300
+
+    val up: Vect3 = getThreeValues("Up Vector")
+    val forward: Vect3 = getThreeValues("Forward Vector")
+
+    val objects: Array[GeometricObject] = Array(
+        Sphere(Vect3(0,0,0), 70, new DColor(255, 0, 0)), 
+        Plane(Vect3(1, 0, 3), 0, new DColor(0, 255, 0))
+    )
+
+    val grid = new Grid(new Vect3(100, 0, 0), forward, up, side)
+
+    val allT: Array[Array[Double]] = grid.rayTrace(objects)
+
+    for (i <- 0 until side) {
+        for (j <- 0 until side) {
+            //print(s"${(allT(i)(j)).toInt}\t")
+        }
+
+        //println()
+    }
+
+
+    val img = new BufferedImage(side, side, BufferedImage.TYPE_INT_RGB)
+
+    val disToColor = (d: Double) => 3 * d
+
+    val fixNeg = (d: Double) => if (d < 0) 0 else if (d > 255) 255 else d.toInt
+
+
+    val assembleRGB = (c: DColor) => c.r.toInt << 16 | c.g.toInt << 8 | c.b.toInt
+
+    println(s"${allT.size}, ${allT(0).size}")
+
+    for (i <- 0 until side; j <- 0 until side) {
+        val c: DColor = new DColor(fixNeg(disToColor(allT(i)(j))), 0, 0)
+        img.setRGB(i, j, assembleRGB(c))
+    }
+
+    val w: WritableImage = new WritableImage(side, side)
+
+    val iv: ImageView = new ImageView(w)
+
+    val p = swing.SwingFXUtils.toFXImage(img, w)
+
+    val app = new JFXApp {
+        stage = new JFXApp.PrimaryStage {
+            title = "Ray Tracing 2.1"
+            scene = new Scene(side.toDouble, side.toDouble) {
+                //fill = Color.Coral
+                //val button = new Button("Click me!")
+                content = iv
+            }
+        }
+    }
+
+    app.main(args)
+
+}
+
+main()

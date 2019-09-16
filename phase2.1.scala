@@ -262,7 +262,7 @@ def main(): Unit = {
     val forward: Vect3 = getThreeValues("Forward Vector")
 
     val sc: SceneObjects = SceneObjects(List(
-        Sphere(Vect3(0,0,0), 70, DColor(255, 0, 0)), 
+        Sphere(Vect3(0,0,0), 70, DColor(0, 255, 0)), 
         Plane(Vect3(1, 0, 3), 0, DColor(0, 255, 0))
     ))
 
@@ -289,7 +289,7 @@ def main(): Unit = {
     println(s"${allT.size}, ${allT(0).size}")
 
     for (i <- 0 until side; j <- 0 until side) {
-        val c: DColor = DColor(fixNeg(disToColor(allT(i)(j))), 0, 0)
+        val c: DColor = DColor(0, 0, fixNeg(disToColor(allT(i)(j))))
         img.setRGB(i, j, assembleRGB(c))
     }
 
