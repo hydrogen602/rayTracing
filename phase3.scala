@@ -9,6 +9,9 @@ import scalafx.scene.image.{Image, WritableImage, ImageView}
 
 import java.awt.image.BufferedImage
 
+import io.StdIn._
+
+
 // Input functions
 
 def getThreeValues(prompt: String): Vect3 = {
@@ -51,17 +54,29 @@ def getOneValue(prompt: String): Double = {
     return getOneValue(prompt)
 }
 
+// case classes
+
+case class LightSource(point: Vect3, color: DColor)
+
+// classes
+
 class DColor(rArg: Double, gArg: Double, bArg: Double) {
 
-    val r = rArg
-    val g = gArg
-    val b = bArg
+    private val red = rArg
+    private val green = gArg
+    private val blue = bArg
 
-    def assembleRGB(): Double = {
-        require(r < 0 || r > 255 || g < 0 || g > 255 || b < 0 || b > 255 , "rgb values not in range [0, 255]")
-        r.toInt << 16 | g.toInt << 8 | b.toInt
+    def assembleRGB(): Int = {
+        require(0 <= red && red <= 255 && 0 <= green && green <= 255 && 0 <= blue && blue <= 255, 
+            "rgb values not in range [0, 255]")
+        red.toInt << 16 | green.toInt << 8 | blue.toInt
     }
 
+    def +(other: DColor): DColor = new DColor(red + other.red, green + other.green, blue + other.blue)
+
+    def -(other: DColor): DColor = new DColor(red - other.red, green - other.green, blue - other.blue)
+
+    def *(sc: Double): DColor = new DColor(red * sc, green * sc, blue * sc)
 }
 
 class Vect3(xArg: Double, yArg: Double, zArg: Double) {
@@ -71,6 +86,7 @@ class Vect3(xArg: Double, yArg: Double, zArg: Double) {
     val z: Double = zArg
 
     def apply(index: Int): Double = {
+        // idk why i made this
         index match {
             case 0 => x
             case 1 => y
@@ -83,8 +99,10 @@ class Vect3(xArg: Double, yArg: Double, zArg: Double) {
 
     def -(other: Vect3): Vect3 = new Vect3(x - other.x, y - other.y, z - other.z)
 
+    // scalar multiplication
     def *(sc: Double): Vect3 = new Vect3(x * sc, y * sc, z * sc)
 
+    // scalar multiplication with 1/sc
     def /(sc: Double): Vect3 = new Vect3(x / sc, y / sc, z / sc)
 
     // dot product
@@ -93,30 +111,75 @@ class Vect3(xArg: Double, yArg: Double, zArg: Double) {
     // cross product
     def x(v: Vect3): Vect3 = new Vect3(y * v.z - z * v.y, -(x * v.z - z * v.x), x * v.y - y * v.x)
 
+    // |v|^2
     def squareOfMag(): Double = this * this
 
+    // |v|
     def mag(): Double = math.sqrt(this * this)
 
+    //  v / |v|
     def normalize(): Vect3 = this / mag() 
 
+    // +v  <- idk why i implemented this
     def unary_+(): Vect3 = new Vect3(x, y, z)
 
+    // -v
     def unary_-(): Vect3 = new Vect3(-x, -y, -z)
 
+    // for debugging
     override def toString(): String = s"<$x, $y, $z>"
 }
 
 abstract class GeometricObject {
-    val n: Vect3
-    val d: Double
-    val c: DColor
+    def reflectRay(ray: Ray): Ray
     def intersection(r: Ray): Double
+    def colorWithLight(): DColor
 }
 
-class Plane(normal: Vect3, dArg: Double, color: DColor) extends GeometricObject {
-    val n: Vect3 = normal
-    val d: Double = dArg
-    val c: DColor = color
+class Plane(normal: Vect3, dArg: Double, colorArg: DColor, refl: Double) extends GeometricObject {
+    require(0 <= refl && refl <= 1)
+    private val n: Vect3 = normal
+    private val d: Double = dArg
+    private val color: DColor = colorArg
+    private val reflectivity: Double = refl // 0 is matte, 1 is a mirror
+
+    def colorWithLight(): DColor = {
+        val inLight = true // implement later
+        
+        return if (inLight) color else new DColor(0, 0, 0)
+    }
+
+    def reflectRay(ray: Ray): Ray = {
+        if (reflectivity < 0.001) {
+            // not reflective, no need to reflect
+            return null
+        }
+
+        /*
+         * r_reflected = r - 2 (r * n) n
+         */
+
+        val t: Double = intersection(ray)
+        assert(t != -1, "reflectRay should only be called on intersecting rays")
+        val pointReflected: Vect3 = ray.extend(t)
+
+        val normal = n.normalize
+        val dirReflected = ray.direction - (normal * 2 * (ray.direction * normal))
+
+        /*
+         * given a ray reflected of the surface of this objects,
+         * this finds the new color of the reflected ray
+         * 
+         * Given reflectivity R in [0, 1]
+         * the new color is (1-R) of the color of the object
+         * and R of the color of the ray being reflected
+         */
+        assert(0 <= reflectivity && reflectivity <= 1, "reflectivity should be in [0, 1]")
+        
+        val colorReflected = (ray.color * reflectivity) + (color * (1 - reflectivity))
+
+        return new Ray(pointReflected, dirReflected, colorReflected)
+    }
 
     def intersection(r: Ray): Double = {
         /* 
@@ -131,17 +194,57 @@ class Plane(normal: Vect3, dArg: Double, color: DColor) extends GeometricObject 
 
          // see CS notebook for math
 
-         val tmp = (d - (n * r.src)) / (n * r.dir)
+         val tmp = (d - (n * r.source)) / (n * r.direction)
          return if (tmp == Double.PositiveInfinity || tmp == Double.NegativeInfinity) -1 else tmp
     }
 
     override def toString(): String = "Plane"
 }
 
-class Sphere(centerArg: Vect3, radiusArg: Double, color: DColor) extends GeometricObject {
-    val n: Vect3 = centerArg
-    val d: Double = radiusArg
-    val c: DColor = color
+class Sphere(centerArg: Vect3, radiusArg: Double, colorArg: DColor, refl: Double) extends GeometricObject {
+    require(0 <= refl && refl <= 1)
+    private val center: Vect3 = centerArg
+    private val radius: Double = radiusArg
+    private val color: DColor = colorArg
+    private val reflectivity: Double = refl // 0 is matte, 1 is a mirror
+
+    def colorWithLight(): DColor = {
+        val inLight = true // implement later
+        
+        return if (inLight) color else new DColor(0, 0, 0)
+    }
+
+    def reflectRay(ray: Ray): Ray = {
+        if (reflectivity < 0.001) {
+            // not reflective, no need to reflect
+            return null
+        }
+
+        /*
+         * r_reflected = r - 2 (r * n) n
+         */
+
+        val t: Double = intersection(ray)
+        assert(t != -1, "reflectRay should only be called on intersecting rays")
+        val pointReflected: Vect3 = ray.extend(t)
+
+        val normal = (pointReflected - center).normalize
+        val dirReflected = ray.direction - (normal * 2 * (ray.direction * normal))
+
+        /*
+         * given a ray reflected of the surface of this objects,
+         * this finds the new color of the reflected ray
+         * 
+         * Given reflectivity R in [0, 1]
+         * the new color is (1-R) of the color of the object
+         * and R of the color of the ray being reflected
+         */
+        assert(0 <= reflectivity && reflectivity <= 1, "reflectivity should be in [0, 1]")
+        
+        val colorReflected = (ray.color * reflectivity) + (color * (1 - reflectivity))
+
+        return new Ray(pointReflected, dirReflected, colorReflected)
+    }
 
     def intersection(r: Ray): Double = {
         /* 
@@ -162,9 +265,9 @@ class Sphere(centerArg: Vect3, radiusArg: Double, color: DColor) extends Geometr
 
         // components of quadratic equation
         // ax^2 + bx + c = 0
-        val a = r.dir.squareOfMag
-        val b = -2 * (n * r.dir) + 2 * (r.src * r.dir)
-        val c = n.squareOfMag - 2 * (n * r.src) + r.src.squareOfMag - d * d
+        val a = r.direction.squareOfMag
+        val b = -2 * (center * r.direction) + 2 * (r.source * r.direction)
+        val c = center.squareOfMag - 2 * (center * r.source) + r.source.squareOfMag - radius * radius
 
         // quadratic equation time
 
@@ -231,31 +334,27 @@ class Grid(raySource: Vect3, forwardArg: Vect3, upArg: Vect3, sideArg: Int) {
         topLeftCorner + (rightStepVector * j) + (downStepVector * i)
     }
 
-    def rayTrace(objects: Array[GeometricObject]): Array[Array[Double]] = {
-        val allValuesT = Array.ofDim[Double](side, side)
+    def rayTraceOnce(objects: Array[GeometricObject], i: Int, j: Int): DColor = {
+        require(0 <= i && i <= side && 0 <= j && j <= side, "rayTraceOnce: Index out of bounds")
 
-        for (i <- 0 until side; j <- 0 until side) {
+        val point = getPoint(i, j)
+        val ray = new Ray(src, point - src, new DColor(0, 0, 0))
 
-            val point = getPoint(i, j)
+        val (t, color) = ray.traceAndHitToDisplay(objects, 0)
 
-            val ray = new Ray(src, point - src, new DColor(0, 0, 0))
-
-            val (t, obj) = ray.trace(objects)
-
-            allValuesT(i)(j) = t
-
-            //println(s"i = $i, j = $j")
-            //println(s"${point.x}, ${point.y}, ${point.z}")
-        }
-
-        return allValuesT
+        // t of -1 represents nothing was hit
+        return if (t == -1) new DColor(0, 0, 0) else color
     }
 }
 
-class Ray(srcArg: Vect3, dirArg: Vect3, color: DColor) {
-    val src: Vect3 = srcArg
-    val dir: Vect3 = dirArg.normalize
-    val c: DColor = color
+class Ray(srcArg: Vect3, dirArg: Vect3, colorArg: DColor) {
+    private val src: Vect3 = srcArg
+    private val dir: Vect3 = dirArg.normalize
+    private val c: DColor = colorArg
+
+    def source = src
+    def direction = dir
+    def color = c
 
     def trace(objects: Array[GeometricObject]): (Double, GeometricObject) = {
 
@@ -271,9 +370,33 @@ class Ray(srcArg: Vect3, dirArg: Vect3, color: DColor) {
 
         return if (distances.length > 0) distances.reduce(minFunc) else (-1, null)
     }
+
+    def traceAndHitToDisplay(objects: Array[GeometricObject], counter: Int): (Double, DColor) = {
+        /*
+         * Find nearest point of intersection and return the color of the said object
+         * If the object is reflective, reflect and find the next intersection
+         * blend colors between intersections
+         *
+         * Note: returns (-1, null) upon failure aka not hitting something
+         */
+        val (d, obj) = trace(objects)
+        if (d == -1) {
+            return (-1, null)
+        }
+        
+        val rReflected: Ray = obj.reflectRay(this)
+        if (rReflected == null || counter > 5) {
+            // no reflectivity  // stack overflow protection
+            return (d, obj.colorWithLight)
+        }
+
+        return rReflected.traceAndHitToDisplay(objects, counter + 1)
+    }
+
+    def extend(t: Double): Vect3 = src + (dir * t)
 }
 
-// custom interators(?),
+// custom interators(?)
 
 
 def main(): Unit = {
@@ -283,37 +406,20 @@ def main(): Unit = {
     val forward: Vect3 = getThreeValues("Forward Vector")
 
     val objects: Array[GeometricObject] = Array(
-        Sphere(Vect3(0,0,0), 70, new DColor(255, 0, 0)), 
-        Plane(Vect3(1, 0, 3), 0, new DColor(0, 255, 0))
+        new Sphere(new Vect3(0,0,0), 70, new DColor(255, 0, 0), 0), 
+        new Plane(new Vect3(1, 0, 3), 0, new DColor(0, 255, 0), 0.5)
     )
 
     val grid = new Grid(new Vect3(100, 0, 0), forward, up, side)
 
-    val allT: Array[Array[Double]] = grid.rayTrace(objects)
-
-    for (i <- 0 until side) {
-        for (j <- 0 until side) {
-            //print(s"${(allT(i)(j)).toInt}\t")
-        }
-
-        //println()
-    }
-
-
     val img = new BufferedImage(side, side, BufferedImage.TYPE_INT_RGB)
 
-    val disToColor = (d: Double) => 3 * d
-
-    val fixNeg = (d: Double) => if (d < 0) 0 else if (d > 255) 255 else d.toInt
-
-
-    val assembleRGB = (c: DColor) => c.r.toInt << 16 | c.g.toInt << 8 | c.b.toInt
-
-    println(s"${allT.size}, ${allT(0).size}")
+    println(s"${side}, ${side}")
 
     for (i <- 0 until side; j <- 0 until side) {
-        val c: DColor = new DColor(fixNeg(disToColor(allT(i)(j))), 0, 0)
-        img.setRGB(i, j, assembleRGB(c))
+        val c: DColor = grid.rayTraceOnce(objects, i, j)
+
+        img.setRGB(i, j, c.assembleRGB())
     }
 
     val w: WritableImage = new WritableImage(side, side)
