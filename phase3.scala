@@ -56,7 +56,7 @@ def getOneValue(prompt: String): Double = {
 
 // case classes
 
-case class LightSource(point: Vect3, color: DColor)
+case class LightSource(point: Vect3)
 
 // classes
 
@@ -133,7 +133,7 @@ class Vect3(xArg: Double, yArg: Double, zArg: Double) {
 abstract class GeometricObject {
     def reflectRay(ray: Ray): Ray
     def intersection(r: Ray): Double
-    def colorWithLight(): DColor
+    def colorWithLight(inLight: Boolean): DColor
 }
 
 class Plane(normal: Vect3, dArg: Double, colorArg: DColor, refl: Double) extends GeometricObject {
@@ -143,9 +143,7 @@ class Plane(normal: Vect3, dArg: Double, colorArg: DColor, refl: Double) extends
     private val color: DColor = colorArg
     private val reflectivity: Double = refl // 0 is matte, 1 is a mirror
 
-    def colorWithLight(): DColor = {
-        val inLight = true // implement later
-        
+    def colorWithLight(inLight: Boolean): DColor = {
         return if (inLight) color else new DColor(0, 0, 0)
     }
 
@@ -208,9 +206,7 @@ class Sphere(centerArg: Vect3, radiusArg: Double, colorArg: DColor, refl: Double
     private val color: DColor = colorArg
     private val reflectivity: Double = refl // 0 is matte, 1 is a mirror
 
-    def colorWithLight(): DColor = {
-        val inLight = true // implement later
-        
+    def colorWithLight(inLight: Boolean): DColor = {
         return if (inLight) color else new DColor(0, 0, 0)
     }
 
@@ -334,16 +330,16 @@ class Grid(raySource: Vect3, forwardArg: Vect3, upArg: Vect3, sideArg: Int) {
         topLeftCorner + (rightStepVector * j) + (downStepVector * i)
     }
 
-    def rayTraceOnce(objects: Array[GeometricObject], i: Int, j: Int): DColor = {
+    def rayTraceOnce(objects: Array[GeometricObject], lsrc: LightSource, i: Int, j: Int): DColor = {
         require(0 <= i && i <= side && 0 <= j && j <= side, "rayTraceOnce: Index out of bounds")
 
         val point = getPoint(i, j)
         val ray = new Ray(src, point - src, new DColor(0, 0, 0))
 
-        val (t, color) = ray.traceAndHitToDisplay(objects, 0)
+        val (t, color) = ray.traceAndHitToDisplay(objects, lsrc, 0)
 
         // t of -1 represents nothing was hit
-        return if (t == -1) new DColor(0, 0, 0) else color
+        return if (t == -1) new DColor(0, 0, 255) else color
     }
 }
 
@@ -371,7 +367,7 @@ class Ray(srcArg: Vect3, dirArg: Vect3, colorArg: DColor) {
         return if (distances.length > 0) distances.reduce(minFunc) else (-1, null)
     }
 
-    def traceAndHitToDisplay(objects: Array[GeometricObject], counter: Int): (Double, DColor) = {
+    def traceAndHitToDisplay(objects: Array[GeometricObject], lsrc: LightSource, counter: Int): (Double, DColor) = {
         /*
          * Find nearest point of intersection and return the color of the said object
          * If the object is reflective, reflect and find the next intersection
@@ -385,12 +381,13 @@ class Ray(srcArg: Vect3, dirArg: Vect3, colorArg: DColor) {
         }
         
         val rReflected: Ray = obj.reflectRay(this)
-        if (rReflected == null || counter > 5) {
+        if (rReflected == null || counter > 0) {
             // no reflectivity  // stack overflow protection
-            return (d, obj.colorWithLight)
+            return (d, obj.colorWithLight(lsrc))
         }
 
-        return rReflected.traceAndHitToDisplay(objects, counter + 1)
+        val newResult = rReflected.traceAndHitToDisplay(objects, counter + 1)
+        return if (newResult._1 == -1) (d, obj.colorWithLight(lsrc)) else newResult
     }
 
     def extend(t: Double): Vect3 = src + (dir * t)
@@ -406,9 +403,11 @@ def main(): Unit = {
     val forward: Vect3 = getThreeValues("Forward Vector")
 
     val objects: Array[GeometricObject] = Array(
-        new Sphere(new Vect3(0,0,0), 70, new DColor(255, 0, 0), 0), 
-        new Plane(new Vect3(1, 0, 3), 0, new DColor(0, 255, 0), 0.5)
+        new Sphere(new Vect3(0,0,0), 70, new DColor(255, 0, 0), 0.5), 
+        new Plane(new Vect3(1, 0, 3), 0, new DColor(0, 255, 0), 0)
     )
+
+    val lsrc = LightSource(new Vect3(0, 0, 200))
 
     val grid = new Grid(new Vect3(100, 0, 0), forward, up, side)
 
@@ -417,7 +416,7 @@ def main(): Unit = {
     println(s"${side}, ${side}")
 
     for (i <- 0 until side; j <- 0 until side) {
-        val c: DColor = grid.rayTraceOnce(objects, i, j)
+        val c: DColor = grid.rayTraceOnce(objects, lsrc, i, j)
 
         img.setRGB(i, j, c.assembleRGB())
     }
