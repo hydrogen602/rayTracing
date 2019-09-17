@@ -383,11 +383,11 @@ class Ray(srcArg: Vect3, dirArg: Vect3, colorArg: DColor) {
         val rReflected: Ray = obj.reflectRay(this)
         if (rReflected == null || counter > 0) {
             // no reflectivity  // stack overflow protection
-            return (d, obj.colorWithLight(lsrc))
+            return (d, obj.colorWithLight(true))
         }
 
-        val newResult = rReflected.traceAndHitToDisplay(objects, counter + 1)
-        return if (newResult._1 == -1) (d, obj.colorWithLight(lsrc)) else newResult
+        val newResult = rReflected.traceAndHitToDisplay(objects, lsrc, counter + 1)
+        return if (newResult._1 == -1) (d, obj.colorWithLight(true)) else newResult
     }
 
     def extend(t: Double): Vect3 = src + (dir * t)
@@ -403,7 +403,7 @@ def main(): Unit = {
     val forward: Vect3 = getThreeValues("Forward Vector")
 
     val objects: Array[GeometricObject] = Array(
-        new Sphere(new Vect3(0,0,0), 70, new DColor(255, 0, 0), 0.5), 
+        new Sphere(new Vect3(0,0,0), 70, new DColor(255, 0, 0), 0), 
         new Plane(new Vect3(1, 0, 3), 0, new DColor(0, 255, 0), 0)
     )
 
