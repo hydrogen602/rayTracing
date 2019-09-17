@@ -176,7 +176,7 @@ class Plane(normal: Vect3, dArg: Double, colorArg: DColor, refl: Double) extends
         
         val colorReflected = (ray.color * reflectivity) + (color * (1 - reflectivity))
 
-        return new Ray(pointReflected, dirReflected, colorReflected)
+        return new Ray(pointReflected + (dirReflected * 0.0001), dirReflected, colorReflected)
     }
 
     def intersection(r: Ray): Double = {
@@ -239,7 +239,7 @@ class Sphere(centerArg: Vect3, radiusArg: Double, colorArg: DColor, refl: Double
         
         val colorReflected = (ray.color * reflectivity) + (color * (1 - reflectivity))
 
-        return new Ray(pointReflected, dirReflected, colorReflected)
+        return new Ray(pointReflected + (dirReflected * 0.0001), dirReflected, colorReflected)
     }
 
     def intersection(r: Ray): Double = {
@@ -388,8 +388,10 @@ class Ray(srcArg: Vect3, dirArg: Vect3, colorArg: DColor) {
             val pointOfHit: Vect3 = extend(d)
 
             val length = (lsrc.point - pointOfHit).mag
+			
+			val dir = lsrc.point - pointOfHit
 
-            val lightRay = new Ray(pointOfHit, lsrc.point - pointOfHit, null)
+            val lightRay = new Ray(pointOfHit + (dir.normalize * 0.001), dir, null)
 
             val (dNew, objNew) = lightRay.trace(objects)
             //println(s"$dNew, $length, ${lightRay.extend(length)}")
@@ -426,8 +428,8 @@ def main(): Unit = {
     val forward: Vect3 = getThreeValues("Forward Vector")
 
     val objects: Array[GeometricObject] = Array(
-        new Sphere(new Vect3(0,0,0), 70, new DColor(255, 0, 0), 0)//,
-        //new Plane(new Vect3(1, 1, 1), 0.5, new DColor(0, 255, 0), 0)
+        new Sphere(new Vect3(0,0,0), 70, new DColor(255, 0, 0), 0.1),
+        new Plane(new Vect3(1, 1, 1), 0.5, new DColor(0, 255, 0), 0)
     )
 
     val lsrc = LightSource(new Vect3(0, 0, 200))
