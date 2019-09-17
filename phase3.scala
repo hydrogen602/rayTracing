@@ -327,7 +327,7 @@ class Grid(raySource: Vect3, forwardArg: Vect3, upArg: Vect3, sideArg: Int) {
 
     def getPoint(i: Int, j: Int): Vect3 = {
         // returns the x, y, z of point (i, j) in the grid
-        topLeftCorner + (rightStepVector * j) + (downStepVector * i)
+        topLeftCorner + (rightStepVector * i) + (downStepVector * j)
     }
 
     def rayTraceOnce(objects: Array[GeometricObject], lsrc: LightSource, i: Int, j: Int): DColor = {
@@ -360,7 +360,8 @@ class Ray(srcArg: Vect3, dirArg: Vect3, colorArg: DColor) {
 
         //val solutionExists = (x: (Double, GeometricObject)) => x._1 >= 0 // funcs return -1 on failure, this weeds that out
 
-        val distances: Array[(Double, GeometricObject)] = objects map intersectionFunc zip objects filter (_._1 >= 0) // solutionExists
+        val distances: Array[(Double, GeometricObject)] = objects map intersectionFunc zip objects filter (_._1 > 0.000001) 
+        // solutionExists at some distance (not colliding with itself)
 
         val minFunc = (a: (Double, GeometricObject), b: (Double, GeometricObject)) => if (a._1 < b._1) a else b
 
@@ -383,7 +384,26 @@ class Ray(srcArg: Vect3, dirArg: Vect3, colorArg: DColor) {
         val rReflected: Ray = obj.reflectRay(this)
         if (rReflected == null || counter > 0) {
             // no reflectivity  // stack overflow protection
-            return (d, obj.colorWithLight(true))
+
+            val pointOfHit: Vect3 = extend(d)
+
+            val length = (lsrc.point - pointOfHit).mag
+
+            val lightRay = new Ray(pointOfHit, lsrc.point - pointOfHit, null)
+
+            val (dNew, objNew) = lightRay.trace(objects)
+            //println(s"$dNew, $length, ${lightRay.extend(length)}")
+            
+            return if (dNew >= length || dNew == -1) {
+                // dNew >= length means theres nothing between the light and the point
+                // dNew == -1 means theres nothing at all on this ray
+                // also nothing blocking the light
+                (d, obj.colorWithLight(true))
+            }
+            else {
+                (d, obj.colorWithLight(false))
+            }
+
         }
 
         val newResult = rReflected.traceAndHitToDisplay(objects, lsrc, counter + 1)
@@ -403,8 +423,8 @@ def main(): Unit = {
     val forward: Vect3 = getThreeValues("Forward Vector")
 
     val objects: Array[GeometricObject] = Array(
-        new Sphere(new Vect3(0,0,0), 70, new DColor(255, 0, 0), 0), 
-        new Plane(new Vect3(1, 0, 3), 0, new DColor(0, 255, 0), 0)
+        new Sphere(new Vect3(0,0,0), 70, new DColor(255, 0, 0), 0),
+        new Plane(new Vect3(1, 1, 1), 0.5, new DColor(0, 255, 0), 0)
     )
 
     val lsrc = LightSource(new Vect3(0, 0, 200))
@@ -429,7 +449,7 @@ def main(): Unit = {
 
     val app = new JFXApp {
         stage = new JFXApp.PrimaryStage {
-            title = "Ray Tracing 2.1"
+            title = "Ray Tracing 3"
             scene = new Scene(side.toDouble, side.toDouble) {
                 //fill = Color.Coral
                 //val button = new Button("Click me!")
