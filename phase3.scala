@@ -398,6 +398,7 @@ class Ray(srcArg: Vect3, dirArg: Vect3, colorArg: DColor) {
                 // dNew >= length means theres nothing between the light and the point
                 // dNew == -1 means theres nothing at all on this ray
                 // also nothing blocking the light
+                //println(s"$dNew, $objNew $pointOfHit, ${lsrc.point - pointOfHit}")
                 (d, obj.colorWithLight(true))
             }
             else {
@@ -417,14 +418,16 @@ class Ray(srcArg: Vect3, dirArg: Vect3, colorArg: DColor) {
 
 
 def main(): Unit = {
+    println("Start2")
+
     val side: Int = 300
 
     val up: Vect3 = getThreeValues("Up Vector")
     val forward: Vect3 = getThreeValues("Forward Vector")
 
     val objects: Array[GeometricObject] = Array(
-        new Sphere(new Vect3(0,0,0), 70, new DColor(255, 0, 0), 0),
-        new Plane(new Vect3(1, 1, 1), 0.5, new DColor(0, 255, 0), 0)
+        new Sphere(new Vect3(0,0,0), 70, new DColor(255, 0, 0), 0)//,
+        //new Plane(new Vect3(1, 1, 1), 0.5, new DColor(0, 255, 0), 0)
     )
 
     val lsrc = LightSource(new Vect3(0, 0, 200))
@@ -462,4 +465,5 @@ def main(): Unit = {
 
 }
 
+println("Start")
 main()
