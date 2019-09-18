@@ -133,7 +133,8 @@ class Vect3(xArg: Double, yArg: Double, zArg: Double) {
 abstract class GeometricObject {
     def reflectRay(ray: Ray): Ray
     def intersection(r: Ray): Double
-    def colorWithLight(inLight: Boolean): DColor
+    def colorWithLight(inLight: Double): DColor
+    def getNormal(ray: Ray): Vect3
 }
 
 class Plane(normal: Vect3, dArg: Double, colorArg: DColor, refl: Double) extends GeometricObject {
@@ -143,8 +144,13 @@ class Plane(normal: Vect3, dArg: Double, colorArg: DColor, refl: Double) extends
     private val color: DColor = colorArg
     private val reflectivity: Double = refl // 0 is matte, 1 is a mirror
 
-    def colorWithLight(inLight: Boolean): DColor = {
-        return if (inLight) color else new DColor(0, 0, 0)
+    def colorWithLight(inLight: Double): DColor = {
+        require(0 <= inLight && inLight <= 1, "inLight has to be in [0, 1]")
+        return color * inLight
+    }
+
+    def getNormal(ray: Ray): Vect3 = {
+        return n.normalize
     }
 
     def reflectRay(ray: Ray): Ray = {
@@ -174,7 +180,7 @@ class Plane(normal: Vect3, dArg: Double, colorArg: DColor, refl: Double) extends
          */
         assert(0 <= reflectivity && reflectivity <= 1, "reflectivity should be in [0, 1]")
         
-        val colorReflected = (ray.color * reflectivity) + (color * (1 - reflectivity))
+        val colorReflected: DColor = (ray.color * reflectivity) + (color * (1 - reflectivity))
 
         return new Ray(pointReflected + (dirReflected * 0.0001), dirReflected, colorReflected)
     }
@@ -206,8 +212,17 @@ class Sphere(centerArg: Vect3, radiusArg: Double, colorArg: DColor, refl: Double
     private val color: DColor = colorArg
     private val reflectivity: Double = refl // 0 is matte, 1 is a mirror
 
-    def colorWithLight(inLight: Boolean): DColor = {
-        return if (inLight) color else new DColor(0, 0, 0)
+    def colorWithLight(inLight: Double): DColor = {
+        require(0 <= inLight && inLight <= 1, "inLight has to be in [0, 1]")
+        return color * inLight
+    }
+
+    def getNormal(ray: Ray): Vect3 = {
+        val t: Double = intersection(ray)
+        assert(t != -1, "getNormal should only be called on intersecting rays")
+        val pointReflected: Vect3 = ray.extend(t)
+
+        return (pointReflected - center).normalize
     }
 
     def reflectRay(ray: Ray): Ray = {
@@ -382,14 +397,14 @@ class Ray(srcArg: Vect3, dirArg: Vect3, colorArg: DColor) {
         }
         
         val rReflected: Ray = obj.reflectRay(this)
-        if (rReflected == null || counter > 0) {
+        if (rReflected == null || counter > 1) {
             // no reflectivity  // stack overflow protection
 
             val pointOfHit: Vect3 = extend(d)
 
             val length = (lsrc.point - pointOfHit).mag
-			
-			val dir = lsrc.point - pointOfHit
+
+            val dir = lsrc.point - pointOfHit
 
             val lightRay = new Ray(pointOfHit + (dir.normalize * 0.001), dir, null)
 
@@ -401,16 +416,20 @@ class Ray(srcArg: Vect3, dirArg: Vect3, colorArg: DColor) {
                 // dNew == -1 means theres nothing at all on this ray
                 // also nothing blocking the light
                 //println(s"$dNew, $objNew $pointOfHit, ${lsrc.point - pointOfHit}")
-                (d, obj.colorWithLight(true))
+
+                val shading = dir.normalize * obj.getNormal(this)
+                
+                (d, obj.colorWithLight(shading))
             }
             else {
-                (d, obj.colorWithLight(false))
+                (d, obj.colorWithLight(0))
             }
 
         }
 
         val newResult = rReflected.traceAndHitToDisplay(objects, lsrc, counter + 1)
-        return if (newResult._1 == -1) (d, obj.colorWithLight(true)) else newResult
+
+        return if (newResult._1 == -1) (d, rReflected.color) else newResult
     }
 
     def extend(t: Double): Vect3 = src + (dir * t)
@@ -428,11 +447,13 @@ def main(): Unit = {
     val forward: Vect3 = getThreeValues("Forward Vector")
 
     val objects: Array[GeometricObject] = Array(
-        new Sphere(new Vect3(0,0,0), 70, new DColor(255, 0, 0), 0.1),
-        new Plane(new Vect3(1, 1, 1), 0.5, new DColor(0, 255, 0), 0)
+        new Sphere(new Vect3(0,0,0), 20, new DColor(255, 0, 0), 0),
+        new Sphere(new Vect3(20,40,20), 20, new DColor(255, 0, 0), 0),
+        new Sphere(new Vect3(0,-40,0), 10, new DColor(255, 0, 0), 0),
+        new Plane(new Vect3(0, -0.3, -1), 40, new DColor(0, 255, 0), 0.1)
     )
 
-    val lsrc = LightSource(new Vect3(0, 0, 200))
+    val lsrc = LightSource(new Vect3(0, 0, 100))
 
     val grid = new Grid(new Vect3(100, 0, 0), forward, up, side)
 
