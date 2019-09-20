@@ -1,4 +1,4 @@
-
+ 
 class Plane(xArg: Double, yArg: Double, zArg: Double, dArg: Double) {
     val x: Double = xArg
     val y: Double = yArg
