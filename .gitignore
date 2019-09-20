@@ -2,3 +2,5 @@
 scalafx_2.12-12.0.2-R18.jar
 result
 .DS_Store
+target/
+.bloop/
