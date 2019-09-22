@@ -20,7 +20,7 @@ trait GeometricObject {
         val normal = getNormal(ray)
         val dirReflected = ray.direction - (normal * 2 * (ray.direction * normal))
 
-        return new Ray(pointReflected + (dirReflected * 0.00001), dirReflected, DColor(0, 0, 0))
+        return new Ray(pointReflected + (dirReflected * 0.00001), dirReflected)
     }
 
     def intersection(r: Ray): Double

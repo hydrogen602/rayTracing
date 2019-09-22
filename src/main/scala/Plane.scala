@@ -8,7 +8,7 @@ class Plane(private val n: Vect3, private val d: Double, val color: DColor, val 
     def getNormal(ray: Ray): Vect3 = {
         return n.normalize
     }
-    
+
     def intersection(r: Ray): Double = {
         /* 
          * r0   =   start point of ray

@@ -1,18 +1,15 @@
 
-class Ray(srcArg: Vect3, dirArg: Vect3, colorArg: DColor) {
-    private val src: Vect3 = srcArg
+class Ray(private val src: Vect3, dirArg: Vect3) {
     private val dir: Vect3 = dirArg.normalize
-    private val c: DColor = colorArg
 
     def source = src
     def direction = dir
-    def color = c
 
     private def colorShading(objects: Array[GeometricObject], lsrc: LightSource, d: Double, obj: GeometricObject): DColor = {
         val pointOfHit: Vect3 = extend(d)
         val length = (lsrc.point - pointOfHit).mag
         val dir = lsrc.point - pointOfHit
-        val lightRay = new Ray(pointOfHit + (dir.normalize * 0.00001), dir, null)
+        val lightRay = new Ray(pointOfHit + (dir.normalize * 0.00001), dir)
         val (dShadow, objShadow) = lightRay.trace(objects)
 
         return if (dShadow >= length || dShadow == -1) {
@@ -24,13 +21,8 @@ class Ray(srcArg: Vect3, dirArg: Vect3, colorArg: DColor) {
             val shading = dir.normalize * obj.getNormal(this)
 
             require(-1 <= shading && shading <= 1, s"shading should be in [0, 1], instead $shading")
-            if (shading <= 0) {
-                DColor(0, 0, 0)
-            }
-            else {
-                
-                obj.color * shading
-            }
+
+            obj.color * math.abs(shading)
         }
         else {
             DColor(0, 0, 0) // in the shadow
@@ -87,11 +79,11 @@ class Ray(srcArg: Vect3, dirArg: Vect3, colorArg: DColor) {
          * and R of the color of the ray being reflected
          */
         
-        val currColor = colorShading(objects, lsrc, d, obj)
+        val shadedColor = colorShading(objects, lsrc, d, obj)
 
-        val colorReflected = (colorNext * obj.reflectivity) + (currColor * (1 - obj.reflectivity))
+        val colorReflected = (colorNext * obj.reflectivity) + (shadedColor * (1 - obj.reflectivity))
 
-        return if (dNext == Double.PositiveInfinity) (dNext, currColor) else (dNext, colorReflected)
+        return if (dNext == Double.PositiveInfinity) (dNext, shadedColor) else (dNext, colorReflected)
     }
 
     def extend(t: Double): Vect3 = src + (dir * t)
