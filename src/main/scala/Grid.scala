@@ -1,16 +1,11 @@
 
 
-class Grid(raySource: Vect3, forwardArg: Vect3, upArg: Vect3, sideArg: Int) {
-    require(forwardArg.squareOfMag == 1 && upArg.squareOfMag == 1)
+class Grid(val src: Vect3, val forward: Vect3, val up: Vect3, val side: Int) {
+    require(forward.squareOfMag == 1 && up.squareOfMag == 1)
 
-    val src: Vect3 = raySource
-    val forward: Vect3 = forwardArg
-    val up: Vect3 = upArg
     val left: Vect3 = up x forward
 
-    val side: Int = sideArg
-
-    val centerOfPixelGrid = raySource + forward
+    val centerOfPixelGrid = src + forward
 
     val topLeftCorner = centerOfPixelGrid + up + left
     val bottomRightCorner = centerOfPixelGrid - up - left
@@ -42,7 +37,7 @@ class Grid(raySource: Vect3, forwardArg: Vect3, upArg: Vect3, sideArg: Int) {
         val point = getPoint(i, j)
         val ray = new Ray(src, point - src, DColor(0, 0, 0))
 
-        val (t, color) = ray.traceAndHitToDisplay(objects, lsrc, 0)
+        val (t, color) = ray.traceAndHitToDisplay(objects, lsrc)
 
         // t of -1 represents nothing was hit
         return if (t == -1) DColor(0, 0, 255) else color

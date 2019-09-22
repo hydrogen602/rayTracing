@@ -8,7 +8,7 @@ class Ray(srcArg: Vect3, dirArg: Vect3, colorArg: DColor) {
     def direction = dir
     def color = c
 
-    def trace(objects: Array[GeometricObject]): (Double, GeometricObject) = {
+    private def trace(objects: Array[GeometricObject]): (Double, GeometricObject) = {
 
         def intersectionFunc(geometry: GeometricObject): Double = {
             geometry.intersection(this)
@@ -24,7 +24,7 @@ class Ray(srcArg: Vect3, dirArg: Vect3, colorArg: DColor) {
         return if (distances.length > 0) distances.reduce(minFunc) else (-1, null)
     }
 
-    def traceAndHitToDisplay(objects: Array[GeometricObject], lsrc: LightSource, counter: Int): (Double, DColor) = {
+    def traceAndHitToDisplay(objects: Array[GeometricObject], lsrc: LightSource, counter: Int = 0): (Double, DColor) = {
         /*
          * Find nearest point of intersection and return the color of the said object
          * If the object is reflective, reflect and find the next intersection
@@ -34,25 +34,20 @@ class Ray(srcArg: Vect3, dirArg: Vect3, colorArg: DColor) {
          */
         val (d, obj) = trace(objects)
         if (d == -1) {
-            return (-1, null)
+            return (Double.PositiveInfinity, DColor(0, 0, 0)) // nothing hit
         }
-        
-        val rReflected: Ray = obj.reflectRay(this)
-        if (rReflected == null || counter > 1) {
-            // no reflectivity  // stack overflow protection
+
+        if (obj.reflectivity < 0.0001 || counter > 3) {
+            // no reflectivity or overflow protection
+            // just return the objects color + shading
 
             val pointOfHit: Vect3 = extend(d)
-
             val length = (lsrc.point - pointOfHit).mag
-
             val dir = lsrc.point - pointOfHit
-
             val lightRay = new Ray(pointOfHit + (dir.normalize * 0.001), dir, null)
+            val (dShadow, objShadow) = lightRay.trace(objects)
 
-            val (dNew, objNew) = lightRay.trace(objects)
-            //println(s"$dNew, $length, ${lightRay.extend(length)}")
-            
-            return if (dNew >= length || dNew == -1) {
+            return if (dShadow >= length || dShadow == -1) {
                 // dNew >= length means theres nothing between the light and the point
                 // dNew == -1 means theres nothing at all on this ray
                 // also nothing blocking the light
@@ -60,13 +55,14 @@ class Ray(srcArg: Vect3, dirArg: Vect3, colorArg: DColor) {
 
                 val shading = dir.normalize * obj.getNormal(this)
                 
-                (d, obj.colorWithLight(shading))
+                (d, obj.color * shading)
             }
             else {
-                (d, obj.colorWithLight(0))
+                (d, DColor(0, 0, 0))
             }
-
         }
+        
+        val rReflected: Ray = obj.reflectRay(this)
 
         val newResult = rReflected.traceAndHitToDisplay(objects, lsrc, counter + 1)
 
