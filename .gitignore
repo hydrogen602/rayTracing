@@ -5,3 +5,5 @@ result
 target/
 .bloop/
 .metals/metals.log
+*.log
+metals.*
