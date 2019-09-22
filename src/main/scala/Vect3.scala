@@ -1,9 +1,5 @@
 
-class Vect3(xArg: Double, yArg: Double, zArg: Double) {
-
-    val x: Double = xArg
-    val y: Double = yArg
-    val z: Double = zArg
+class Vect3 private(val x: Double, val y: Double, val z: Double) {
 
     def apply(index: Int): Double = {
         // idk why i made this
@@ -15,21 +11,21 @@ class Vect3(xArg: Double, yArg: Double, zArg: Double) {
         }
     }
 
-    def +(other: Vect3): Vect3 = new Vect3(x + other.x, y + other.y, z + other.z)
+    def +(other: Vect3): Vect3 = Vect3(x + other.x, y + other.y, z + other.z)
 
-    def -(other: Vect3): Vect3 = new Vect3(x - other.x, y - other.y, z - other.z)
+    def -(other: Vect3): Vect3 = Vect3(x - other.x, y - other.y, z - other.z)
 
     // scalar multiplication
-    def *(sc: Double): Vect3 = new Vect3(x * sc, y * sc, z * sc)
+    def *(sc: Double): Vect3 = Vect3(x * sc, y * sc, z * sc)
 
     // scalar multiplication with 1/sc
-    def /(sc: Double): Vect3 = new Vect3(x / sc, y / sc, z / sc)
+    def /(sc: Double): Vect3 = Vect3(x / sc, y / sc, z / sc)
 
     // dot product
     def *(other: Vect3): Double = x * other.x + y * other.y + z * other.z
 
     // cross product
-    def x(v: Vect3): Vect3 = new Vect3(y * v.z - z * v.y, -(x * v.z - z * v.x), x * v.y - y * v.x)
+    def x(v: Vect3): Vect3 = Vect3(y * v.z - z * v.y, -(x * v.z - z * v.x), x * v.y - y * v.x)
 
     // |v|^2
     def squareOfMag(): Double = this * this
@@ -41,11 +37,17 @@ class Vect3(xArg: Double, yArg: Double, zArg: Double) {
     def normalize(): Vect3 = this / mag() 
 
     // +v  <- idk why i implemented this
-    def unary_+(): Vect3 = new Vect3(x, y, z)
+    def unary_+(): Vect3 = Vect3(x, y, z)
 
     // -v
-    def unary_-(): Vect3 = new Vect3(-x, -y, -z)
+    def unary_-(): Vect3 = Vect3(-x, -y, -z)
 
     // for debugging
     override def toString(): String = s"<$x, $y, $z>"
+}
+
+object Vect3 {
+    def apply(x: Double, y: Double, z: Double): Vect3 = {
+        new Vect3(x, y, z)
+    }
 }

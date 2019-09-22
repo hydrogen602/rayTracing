@@ -14,68 +14,58 @@ import io.StdIn._
 case class LightSource(point: Vect3)
 // Input functions
 
-class Main() {
-  def getThreeValues(prompt: String): Vect3 = {
-    print(prompt + " ")
-    val ln = readLine
-    val dataStr: Array[String] = ln.split(" ")
+object Main {
 
-    if (dataStr.length != 3) {
-        println("Y are you so bad at life")
-        println(dataStr(0) +" "+ dataStr(1) +" "+ dataStr(2))
-        return getThreeValues(prompt)
-    }
-
-    try {
-        val nums: Array[Double] = dataStr.map(_.trim.toDouble)
-        return new Vect3(nums(0), nums(1), nums(2))
-    }
-    catch {
-        case x: NumberFormatException => {
-            println("Y are you so bad at life")
-            println(dataStr(0) +" "+ dataStr(1) +" "+ dataStr(2))
-        }
-    }
-    return getThreeValues(prompt)
+  def stringToVect(s: String): Vect3 = {
+    val Array(a, b, c) = s.split(",")
+    Vect3(a.toDouble, b.toDouble, c.toDouble)
   }
 
-  def getOneValue(prompt: String): Double = {
-    print(prompt + ": ")
-    val ln = readLine
-
-    try {
-        return ln.trim.toDouble
-    }
-    catch {
-        case x: NumberFormatException => {
-            println("Y are you so bad at life")
-            println(ln)
-        }
-    }
-    return getOneValue(prompt)
+  def stringToDColor(s: String): DColor = {
+    val Array(a, b, c) = s.split(",")
+    DColor(a.toDouble, b.toDouble, c.toDouble)
   }
 
-  // case classes
-
-
-  def main1(args: Array[String]): Unit = {
+  def main(args: Array[String]): Unit = {
     println("Start2")
 
-    val side: Int = 300
+    val config = xml.XML.loadFile("config.xml")
 
-    val up: Vect3 = getThreeValues("Up Vector")
-    val forward: Vect3 = getThreeValues("Forward Vector")
+    val side: Int = (config \ "side").text.toInt
 
-    val objects: Array[GeometricObject] = Array(
-        new Sphere(new Vect3(0,0,0), 20, new DColor(255, 0, 0), 0),
-        new Sphere(new Vect3(20,40,20), 20, new DColor(255, 0, 0), 0),
-        new Sphere(new Vect3(0,-40,0), 10, new DColor(255, 0, 0), 0),
-        new Plane(new Vect3(0, -0.3, -1), 40, new DColor(0, 255, 0), 0.1)
-    )
+    val up: Vect3 = stringToVect((config \ "upVector").text)
+    val forward: Vect3 = stringToVect((config \ "forwardVector").text)
+    val raySource: Vect3 = stringToVect((config \ "raySource").text)
 
-    val lsrc = LightSource(new Vect3(0, 0, 100))
+    def generateSphere(n: xml.Node): Sphere = {
+      val center: Vect3 = stringToVect((n \ "center").text)
+      val radius: Double = (n \ "radius").text.toDouble
+      val color: DColor = stringToDColor((n \ "color").text)
+      val refl: Double = (n \ "reflectivity").text.toDouble
+      require(0 <= refl && refl <= 1, "Reflectivity must be in range [0, 1]")
 
-    val grid = new Grid(new Vect3(100, 0, 0), forward, up, side)
+      new Sphere(center, radius, color, refl)
+    }
+
+    def generatePlane(n: xml.Node): Plane = {
+      val normal: Vect3 = stringToVect((n \ "normal").text)
+      val d: Double = (n \ "distance").text.toDouble
+      val color: DColor = stringToDColor((n \ "color").text)
+      val refl: Double = (n \ "reflectivity").text.toDouble
+      require(0 <= refl && refl <= 1, "Reflectivity must be in range [0, 1]")
+
+      new Plane(normal, d, color, refl)
+    }
+
+    val xmlObjects = xml.XML.loadFile("objects.xml")
+    val spheres = (xmlObjects \ "sphere").map(generateSphere).toArray
+    val planes = (xmlObjects \ "plane").map(generatePlane).toArray
+
+    val objects: Array[GeometricObject] = spheres ++ planes
+
+    val lsrc = LightSource(Vect3(0, 0, 100))
+
+    val grid = new Grid(raySource, forward, up, side)
 
     val img = new BufferedImage(side, side, BufferedImage.TYPE_INT_RGB)
 
@@ -106,12 +96,5 @@ class Main() {
 
     app.main(args)
 
-  }
-}
-
-object Main {
-  def main(args: Array[String]): Unit = {
-    val m = new Main()
-    m.main1(args)
   }
 }

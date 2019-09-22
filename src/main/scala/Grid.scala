@@ -40,11 +40,11 @@ class Grid(raySource: Vect3, forwardArg: Vect3, upArg: Vect3, sideArg: Int) {
         require(0 <= i && i <= side && 0 <= j && j <= side, "rayTraceOnce: Index out of bounds")
 
         val point = getPoint(i, j)
-        val ray = new Ray(src, point - src, new DColor(0, 0, 0))
+        val ray = new Ray(src, point - src, DColor(0, 0, 0))
 
         val (t, color) = ray.traceAndHitToDisplay(objects, lsrc, 0)
 
         // t of -1 represents nothing was hit
-        return if (t == -1) new DColor(0, 0, 255) else color
+        return if (t == -1) DColor(0, 0, 255) else color
     }
 }

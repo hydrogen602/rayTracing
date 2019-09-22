@@ -1,0 +1,6 @@
+<config>
+    <upVector>0,0,1</upVector>
+    <forwardVector>-1,0,0</forwardVector>
+    <side>300</side>
+    <raySource>100,0,0</raySource>
+</config>

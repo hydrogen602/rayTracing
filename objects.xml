@@ -1,0 +1,26 @@
+<objects>
+    <sphere>
+        <center>0,0,0</center>
+        <radius>20</radius>
+        <color>255,0,0</color>
+        <reflectivity>0</reflectivity>
+    </sphere>
+    <sphere>
+        <center>20,40,20</center>
+        <radius>20</radius>
+        <color>255,0,0</color>
+        <reflectivity>0</reflectivity>
+    </sphere>
+    <sphere>
+        <center>0,-40,0</center>
+        <radius>10</radius>
+        <color>255,0,0</color>
+        <reflectivity>0</reflectivity>
+    </sphere>
+    <plane>
+        <normal>0,-0.3,-1</normal>
+        <distance>40</distance>
+        <color>0,255,0</color>
+        <reflectivity>0.5</reflectivity>
+     </plane>
+</objects>
