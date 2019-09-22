@@ -4,6 +4,9 @@ import scalafx.scene.paint.Color
 import scalafx.scene.control.Button
 import scalafx.scene.image.Image
 
+import javax.imageio.ImageIO
+import java.io.File
+
 import javafx.embed.swing
 import scalafx.scene.image.{Image, WritableImage, ImageView}
 
@@ -82,6 +85,10 @@ object Main {
     val iv: ImageView = new ImageView(w)
 
     val p = swing.SwingFXUtils.toFXImage(img, w)
+
+    //val file: java.io.File = new File("test.png")
+
+    //ImageIO.write(img, "png", file)
 
     val app = new JFXApp {
         stage = new JFXApp.PrimaryStage {
