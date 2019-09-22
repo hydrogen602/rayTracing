@@ -3,7 +3,7 @@ class DColor private(private val red: Double, private val green: Double, private
 
     def assembleRGB(): Int = {
         require(0 <= red && red <= 255 && 0 <= green && green <= 255 && 0 <= blue && blue <= 255, 
-            "rgb values not in range [0, 255]")
+            s"rgb values not in range [0, 255], instead ($red, $green, $blue)")
         red.toInt << 16 | green.toInt << 8 | blue.toInt
     }
 

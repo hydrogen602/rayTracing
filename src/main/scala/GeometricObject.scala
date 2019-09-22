@@ -20,18 +20,7 @@ trait GeometricObject {
         val normal = getNormal(ray)
         val dirReflected = ray.direction - (normal * 2 * (ray.direction * normal))
 
-        /*
-         * given a ray reflected of the surface of this objects,
-         * this finds the new color of the reflected ray
-         * 
-         * Given reflectivity R in [0, 1]
-         * the new color is (1-R) of the color of the object
-         * and R of the color of the ray being reflected
-         */
-        
-        val colorReflected = (ray.color * reflectivity) + (color * (1 - reflectivity))
-
-        return new Ray(pointReflected + (dirReflected * 0.0001), dirReflected, colorReflected)
+        return new Ray(pointReflected + (dirReflected * 0.00001), dirReflected, DColor(0, 0, 0))
     }
 
     def intersection(r: Ray): Double
