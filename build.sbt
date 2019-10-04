@@ -4,9 +4,9 @@ version := "1.0"
 scalaVersion := "2.12.8"
 run / fork := true
 
-mainClass in (Compile, packageBin) := Some("Main")
+//mainClass in (Compile, packageBin) := Some("rayTracing.Main")
 
-mainClass in (Compile, run) := Some("Main")
+mainClass in (Compile, run) := Some("rayTracing.Main")
 
 libraryDependencies ++= Seq(
 	"org.scalafx" %% "scalafx" % "8.0.192-R14",

@@ -1,5 +1,7 @@
+package rayTracing.geometricObject
 
-
+import rayTracing._
+import rayTracing.data._
 
 class Sphere(private val center: Vect3, private val radius: Double, val color: DColor, val reflectivity: Double) extends GeometricObject {
     require(0 <= reflectivity && reflectivity <= 1)

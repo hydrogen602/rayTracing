@@ -1,3 +1,6 @@
+package rayTracing.data
+
+import rayTracing._
 
 class DColor private(private val red: Double, private val green: Double, private val blue: Double) {
 

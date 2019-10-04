@@ -1,3 +1,6 @@
+package rayTracing
+import data._
+import geometricObject._
 
 class Ray(private val src: Vect3, dirArg: Vect3) {
     private val dir: Vect3 = dirArg.normalize

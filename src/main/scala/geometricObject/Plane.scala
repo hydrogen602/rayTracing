@@ -1,3 +1,8 @@
+package rayTracing.geometricObject
+
+import rayTracing._
+import rayTracing.data._
+
 import scala.languageFeature.reflectiveCalls
 
 

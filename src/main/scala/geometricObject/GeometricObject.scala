@@ -1,3 +1,7 @@
+package rayTracing.geometricObject
+
+import rayTracing._
+import rayTracing.data._
 
 trait GeometricObject {
     val color: DColor

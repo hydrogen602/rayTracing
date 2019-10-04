@@ -1,3 +1,5 @@
+package rayTracing
+
 import scalafx.application.JFXApp
 import scalafx.scene.Scene
 import scalafx.scene.paint.Color
@@ -14,10 +16,15 @@ import java.awt.image.BufferedImage
 
 import io.StdIn._
 
-case class LightSource(point: Vect3)
+import data._
+import geometricObject._
+
+case class LightSource(point: Vect3, color: DColor)
 // Input functions
 
 object Main {
+
+  val config = data.Config("config.xml")
 
   def stringToVect(s: String): Vect3 = {
     val Array(a, b, c) = s.split(",")
@@ -29,16 +36,8 @@ object Main {
     DColor(a.toDouble, b.toDouble, c.toDouble)
   }
 
-  def main(args: Array[String]): Unit = {
+  def main(args: Array[String]) {
     println("Start2")
-
-    val config = xml.XML.loadFile("config.xml")
-
-    val side: Int = (config \ "side").text.toInt
-
-    val up: Vect3 = stringToVect((config \ "upVector").text)
-    val forward: Vect3 = stringToVect((config \ "forwardVector").text)
-    val raySource: Vect3 = stringToVect((config \ "raySource").text)
 
     def generateSphere(n: xml.Node): Sphere = {
       val center: Vect3 = stringToVect((n \ "center").text)
@@ -66,21 +65,21 @@ object Main {
 
     val objects: Array[GeometricObject] = spheres ++ planes
 
-    val lsrc = LightSource(Vect3(0, 0, 100))
+    val lsrc = LightSource(Vect3(0, 0, 100), DColor(255, 255, 255))
 
-    val grid = new Grid(raySource, forward, up, side)
+    val grid = new Grid(config.raySource, config.forward, config.up, config.side)
 
-    val img = new BufferedImage(side, side, BufferedImage.TYPE_INT_RGB)
+    val img = new BufferedImage(config.side, config.side, BufferedImage.TYPE_INT_RGB)
 
-    println(s"${side}, ${side}")
+    println(s"${config.side}, ${config.side}")
 
-    for (i <- 0 until side; j <- 0 until side) {
+    for (i <- 0 until config.side; j <- 0 until config.side) {
         val c: DColor = grid.rayTraceOnce(objects, lsrc, i, j)
 
         img.setRGB(i, j, c.assembleRGB())
     }
 
-    val w: WritableImage = new WritableImage(side, side)
+    val w: WritableImage = new WritableImage(config.side, config.side)
 
     val iv: ImageView = new ImageView(w)
 
@@ -93,9 +92,7 @@ object Main {
     val app = new JFXApp {
         stage = new JFXApp.PrimaryStage {
             title = "Ray Tracing 3"
-            scene = new Scene(side.toDouble, side.toDouble) {
-                //fill = Color.Coral
-                //val button = new Button("Click me!")
+            scene = new Scene(config.side.toDouble, config.side.toDouble) {
                 content = iv
             }
         }

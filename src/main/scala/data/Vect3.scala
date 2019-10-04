@@ -1,3 +1,5 @@
+package rayTracing.data
+import rayTracing._
 
 class Vect3 private(val x: Double, val y: Double, val z: Double) {
 
