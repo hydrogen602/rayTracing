@@ -1,4 +1,5 @@
 package rayTracing
+
 import data._
 import geometricObject._
 
@@ -36,12 +37,11 @@ class Grid(val src: Vect3, val forward: Vect3, val up: Vect3, val side: Int) {
     def rayTraceOnce(objects: Array[GeometricObject], lsrc: LightSource, i: Int, j: Int): DColor = {
         require(0 <= i && i <= side && 0 <= j && j <= side, "rayTraceOnce: Index out of bounds")
 
-        val point = getPoint(i, j)
-        val ray = new Ray(src, point - src)
+        val ray = Ray(src, getPoint(i, j) - src)
 
         val (t, color) = ray.traceAndHitToDisplay(objects, lsrc)
 
         // t of -1 represents nothing was hit
-        return if (t == -1) DColor(0, 0, 255) else color
+        return if (t == -1) DColor(0, 0, 255) else color // why is it blue?
     }
 }

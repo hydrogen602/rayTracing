@@ -1,18 +1,21 @@
 package rayTracing
+
 import data._
 import geometricObject._
 
-class Ray(private val src: Vect3, dirArg: Vect3) {
-    private val dir: Vect3 = dirArg.normalize
+class Ray private(private val src: Vect3, private val dir: Vect3) {
 
     def source = src
     def direction = dir
 
     private def colorShading(objects: Array[GeometricObject], lsrc: LightSource, d: Double, obj: GeometricObject): DColor = {
         val pointOfHit: Vect3 = extend(d)
+
+        val lightColor = lsrc.color
+
         val length = (lsrc.point - pointOfHit).mag
         val dir = lsrc.point - pointOfHit
-        val lightRay = new Ray(pointOfHit + (dir.normalize * 0.00001), dir)
+        val lightRay = Ray(pointOfHit + (dir.normalize * 0.00001), dir)
         val (dShadow, objShadow) = lightRay.trace(objects)
 
         return if (dShadow >= length || dShadow == -1) {
@@ -25,7 +28,7 @@ class Ray(private val src: Vect3, dirArg: Vect3) {
 
             require(-1 <= shading && shading <= 1, s"shading should be in [0, 1], instead $shading")
 
-            obj.color * math.abs(shading)
+            lsrc.applyColor(obj.color * math.abs(shading))         
         }
         else {
             DColor(0, 0, 0) // in the shadow
@@ -61,15 +64,18 @@ class Ray(private val src: Vect3, dirArg: Vect3) {
             return (Double.PositiveInfinity, DColor(0, 0, 0)) // nothing hit
         }
 
-        if (obj.reflectivity < 0.0001 || counter > 3) {
-            // no reflectivity or overflow protection
+        if (counter > 3) {
+            // overflow protection
             // just return the objects color + shading
 
             val color = colorShading(objects, lsrc, d, obj)
             return (d, color)
         }
         
-        val rReflected: Ray = obj.reflectRay(this)
+        val rReflected: Ray = obj.reflectRay(this) match {
+            case Some(r) => r
+            case None => return (d, colorShading(objects, lsrc, d, obj))
+        }
 
         val (dNext, colorNext) = rReflected.traceAndHitToDisplay(objects, lsrc, counter + 1)
 
@@ -90,4 +96,10 @@ class Ray(private val src: Vect3, dirArg: Vect3) {
     }
 
     def extend(t: Double): Vect3 = src + (dir * t)
+}
+
+object Ray {
+    def apply(src: Vect3, dir: Vect3): Ray = {
+        new Ray(src, dir.normalize)
+    }
 }

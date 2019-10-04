@@ -18,8 +18,8 @@ import io.StdIn._
 
 import data._
 import geometricObject._
+import data.LightSource
 
-case class LightSource(point: Vect3, color: DColor)
 // Input functions
 
 object Main {
