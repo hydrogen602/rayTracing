@@ -5,6 +5,7 @@ import scalafx.scene.Scene
 import scalafx.scene.paint.Color
 import scalafx.scene.control.Button
 import scalafx.scene.image.Image
+import scalafx.animation.AnimationTimer
 
 import javax.imageio.ImageIO
 import java.io.File
@@ -26,6 +27,9 @@ object Main {
 
   val config = data.Config("config.xml")
 
+  var lastT: Double = -1
+  var totalSec: Double = 0
+
   def stringToVect(s: String): Vect3 = {
     val Array(a, b, c) = s.split(",")
     Vect3(a.toDouble, b.toDouble, c.toDouble)
@@ -37,7 +41,7 @@ object Main {
   }
 
   def generateImage(grid: Grid, img: BufferedImage, objects: Array[GeometricObject]) {
-    for (i <- 0 until config.side; j <- 0 until config.side) {
+    for (i <- 0 until config.side; j <- (0 until config.side).par) {
       val colors: List[DColor] = for (lsrc <- config.lightSources) yield {
         grid.rayTraceOnce(objects, lsrc, i, j)
       }
@@ -45,6 +49,21 @@ object Main {
 
       img.setRGB(i, j, c.assembleRGB())
     }
+  }
+
+  def spin(theta: Double): (Vect3, Vect3, Vect3) = {
+    // spin around the z-axis
+    // theta = 0 is <200, 0, 0>
+    // theta = pi/2 is <0, 200, 0>
+    // theta = pi is <-200, 0, 0>
+    val horizontalDistance = config.raySource.mag
+    val x = math.cos(theta) * horizontalDistance
+    val y = math.sin(theta) * horizontalDistance
+    val raySource = Vect3(x, y, config.raySource.z)
+
+    val forwardVect = (-raySource).normalize
+    val upVect = Vect3(0, 0, 1)
+    (raySource, forwardVect, upVect)
   }
 
   def renderImage(grid: Grid, objects: Array[GeometricObject]): ImageView = {
@@ -64,9 +83,7 @@ object Main {
     return iv
   }
 
-  def main(args: Array[String]) {
-    println("Start2")
-
+  def loadObjects(xmlFileName: String): Array[GeometricObject] = {
     def generateSphere(n: xml.Node): Sphere = {
       val center: Vect3 = stringToVect((n \ "center").text)
       val radius: Double = (n \ "radius").text.toDouble
@@ -87,15 +104,16 @@ object Main {
       new Plane(normal, d, color, refl)
     }
 
-    val xmlObjects = xml.XML.loadFile("objects.xml")
+    val xmlObjects = xml.XML.loadFile(xmlFileName)
     val spheres = (xmlObjects \ "sphere").map(generateSphere).toArray
     val planes = (xmlObjects \ "plane").map(generatePlane).toArray
+    spheres ++ planes
+  }
 
-    val objects: Array[GeometricObject] = spheres ++ planes
+  def main(args: Array[String]) {
+    println("Start2")
 
-    val grid = new Grid(config.raySource, config.forward, config.up, config.side)
-
-    
+    val objects: Array[GeometricObject] = loadObjects("objects.xml")
 
     println(s"${config.side}, ${config.side}")
 
@@ -103,7 +121,30 @@ object Main {
         stage = new JFXApp.PrimaryStage {
             title = "Ray Tracing 3"
             scene = new Scene(config.side.toDouble, config.side.toDouble) {
-                content = renderImage(grid, objects)
+
+                def stop() {
+                  timer.stop()
+                }
+          
+                val timer = AnimationTimer(time => {
+                  val deltaT: Double = if (lastT > 0) {
+                    val diff = time - lastT
+                    lastT = time
+                    diff
+                  }
+                  else {
+                    lastT = time
+                    0
+                  }
+                  val deltaSec = deltaT / 1000000000 // 10^9
+                  totalSec += deltaSec
+                  val (raySrc, forwardVect, upVect) = spin(totalSec / 10)
+                  //assert(forwardVect.squareOfMag() == 1)
+                  val grid = new Grid(raySrc, forwardVect, upVect, config.side)
+
+                  content = renderImage(grid, objects)
+                })
+                timer.start()
             }
         }
     }

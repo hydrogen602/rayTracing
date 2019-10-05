@@ -4,7 +4,7 @@ import data._
 import geometricObject._
 
 class Grid(val src: Vect3, val forward: Vect3, val up: Vect3, val side: Int) {
-    require(forward.squareOfMag == 1 && up.squareOfMag == 1)
+    require(math.abs(forward.squareOfMag - 1) < 0.001 && math.abs(up.squareOfMag - 1) < 0.001)
 
     val left: Vect3 = up x forward
 
