@@ -16,6 +16,8 @@ class DColor private(val red: Double, val green: Double, val blue: Double) exten
 
     def *(sc: Double): DColor = new DColor(red * sc, green * sc, blue * sc)
 
+    def /(sc: Double): DColor = new DColor(red / sc, green / sc, blue / sc)
+
     def ==(d: DColor): Boolean = {
         math.abs(red - d.red) < 0.001 && math.abs(green - d.green) < 0.001 && math.abs(blue - d.blue) < 0.001
     }

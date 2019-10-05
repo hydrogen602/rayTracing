@@ -23,8 +23,7 @@
         <color>0,0,255</color>
         <reflectivity>0.5</reflectivity>
      </plane>
-     <!--
-     <plane>
+     <!--<plane>
         <normal>-1,-0.5,0</normal>
         <distance>120</distance>
         <color>0,255,255</color>

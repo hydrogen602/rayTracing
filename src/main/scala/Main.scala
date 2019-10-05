@@ -36,6 +36,34 @@ object Main {
     DColor(a.toDouble, b.toDouble, c.toDouble)
   }
 
+  def generateImage(grid: Grid, img: BufferedImage, objects: Array[GeometricObject]) {
+    for (i <- 0 until config.side; j <- 0 until config.side) {
+      val colors: List[DColor] = for (lsrc <- config.lightSources) yield {
+        grid.rayTraceOnce(objects, lsrc, i, j)
+      }
+      val c = colors.reduce((a, b) => (a + b)/2)
+
+      img.setRGB(i, j, c.assembleRGB())
+    }
+  }
+
+  def renderImage(grid: Grid, objects: Array[GeometricObject]): ImageView = {
+    val img = new BufferedImage(config.side, config.side, BufferedImage.TYPE_INT_RGB)
+
+    generateImage(grid, img, objects)
+
+    val w: WritableImage = new WritableImage(config.side, config.side)
+
+    val iv: ImageView = new ImageView(w)
+
+    val p = swing.SwingFXUtils.toFXImage(img, w)
+
+    //val file: java.io.File = new File("test.png")
+
+    //ImageIO.write(img, "png", file)
+    return iv
+  }
+
   def main(args: Array[String]) {
     println("Start2")
 
@@ -65,35 +93,17 @@ object Main {
 
     val objects: Array[GeometricObject] = spheres ++ planes
 
-    val lsrc = LightSource(Vect3(0, 0, 100), DColor(255, 255, 255))
-
     val grid = new Grid(config.raySource, config.forward, config.up, config.side)
 
-    val img = new BufferedImage(config.side, config.side, BufferedImage.TYPE_INT_RGB)
+    
 
     println(s"${config.side}, ${config.side}")
-
-    for (i <- 0 until config.side; j <- 0 until config.side) {
-        val c: DColor = grid.rayTraceOnce(objects, lsrc, i, j)
-
-        img.setRGB(i, j, c.assembleRGB())
-    }
-
-    val w: WritableImage = new WritableImage(config.side, config.side)
-
-    val iv: ImageView = new ImageView(w)
-
-    val p = swing.SwingFXUtils.toFXImage(img, w)
-
-    //val file: java.io.File = new File("test.png")
-
-    //ImageIO.write(img, "png", file)
 
     val app = new JFXApp {
         stage = new JFXApp.PrimaryStage {
             title = "Ray Tracing 3"
             scene = new Scene(config.side.toDouble, config.side.toDouble) {
-                content = iv
+                content = renderImage(grid, objects)
             }
         }
     }

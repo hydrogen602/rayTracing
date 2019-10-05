@@ -3,4 +3,6 @@
     <forwardVector>-1,0,0</forwardVector>
     <side>500</side>
     <raySource>200,0,0</raySource>
+    <lightSource color="255,255,255">0,0,100</lightSource>
+    <lightSource color="255,255,255">0,70,70</lightSource>
 </config>
