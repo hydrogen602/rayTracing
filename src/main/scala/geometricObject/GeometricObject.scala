@@ -12,8 +12,10 @@ trait GeometricObject {
         else {
             // r_reflected = r - 2 (r * n) n
 
-            val t: Double = intersection(ray)
-            assert(t != -1, "reflectRay should only be called on intersecting rays")
+            val t: Double = intersection(ray) match {
+                case Some(value) => value
+                case None => throw new IllegalStateException("reflectRay should only be called on intersecting rays")
+            }
             val pointReflected: Vect3 = ray.extend(t)
 
             val normal = getNormal(ray)
@@ -23,7 +25,7 @@ trait GeometricObject {
         }
     }
 
-    def intersection(r: Ray): Double
+    def intersection(r: Ray): Option[Double]
 
     def getNormal(ray: Ray): Vect3
 }

@@ -8,14 +8,16 @@ class Sphere(private val center: Vect3, private val radius: Double, val color: D
     // 0 is matte, 1 is a mirror
 
     def getNormal(ray: Ray): Vect3 = {
-        val t: Double = intersection(ray)
-        assert(t != -1, "getNormal should only be called on intersecting rays")
+        val t: Double = intersection(ray) match {
+            case Some(value) => value
+            case None => throw new IllegalStateException("reflectRay should only be called on intersecting rays")
+        }
         val pointReflected: Vect3 = ray.extend(t)
 
         return (pointReflected - center).normalize
     }
 
-    def intersection(r: Ray): Double = {
+    def intersection(r: Ray): Option[Double] = {
         /* 
          * r0   =   start point of ray
          * r    =   direction from start
@@ -49,19 +51,18 @@ class Sphere(private val center: Vect3, private val radius: Double, val color: D
 
         if (thingInSquareRoot < 0) {
             // no solution
-            return -1 
+            None
         }
+        else {
+            val positiveSide = (-b + math.sqrt(thingInSquareRoot)) / (2 * a)
+            val negativeSide = (-b - math.sqrt(thingInSquareRoot)) / (2 * a)
 
-        val positiveSide = (-b + math.sqrt(thingInSquareRoot)) / (2 * a)
-        val negativeSide = (-b - math.sqrt(thingInSquareRoot)) / (2 * a)
-
-        //println("solutions = " + positiveSide + " and " + negativeSide)
-
-        return if (positiveSide < 0 && negativeSide < 0) -1
-            else if (positiveSide < 0) negativeSide
-            else if (negativeSide < 0) positiveSide
-            else if (positiveSide < negativeSide) positiveSide
-            else negativeSide
+            Some(if (positiveSide < 0 && negativeSide < 0) -1
+                else if (positiveSide < 0) negativeSide
+                else if (negativeSide < 0) positiveSide
+                else if (positiveSide < negativeSide) positiveSide
+                else negativeSide)
+        }
     }
 
     override def toString(): String = "Sphere"

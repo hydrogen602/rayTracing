@@ -83,37 +83,8 @@ object Main {
     return iv
   }
 
-  def loadObjects(xmlFileName: String): Array[GeometricObject] = {
-    def generateSphere(n: xml.Node): Sphere = {
-      val center: Vect3 = stringToVect((n \ "center").text)
-      val radius: Double = (n \ "radius").text.toDouble
-      val color: DColor = stringToDColor((n \ "color").text)
-      val refl: Double = (n \ "reflectivity").text.toDouble
-      require(0 <= refl && refl <= 1, "Reflectivity must be in range [0, 1]")
-
-      new Sphere(center, radius, color, refl)
-    }
-
-    def generatePlane(n: xml.Node): Plane = {
-      val normal: Vect3 = stringToVect((n \ "normal").text)
-      val d: Double = (n \ "distance").text.toDouble
-      val color: DColor = stringToDColor((n \ "color").text)
-      val refl: Double = (n \ "reflectivity").text.toDouble
-      require(0 <= refl && refl <= 1, "Reflectivity must be in range [0, 1]")
-
-      new Plane(normal, d, color, refl)
-    }
-
-    val xmlObjects = xml.XML.loadFile(xmlFileName)
-    val spheres = (xmlObjects \ "sphere").map(generateSphere).toArray
-    val planes = (xmlObjects \ "plane").map(generatePlane).toArray
-    spheres ++ planes
-  }
-
   def main(args: Array[String]) {
     println("Start2")
-
-    val objects: Array[GeometricObject] = loadObjects("objects.xml")
 
     println(s"${config.side}, ${config.side}")
 
@@ -142,7 +113,7 @@ object Main {
                   //assert(forwardVect.squareOfMag() == 1)
                   val grid = new Grid(raySrc, forwardVect, upVect, config.side)
 
-                  content = renderImage(grid, objects)
+                  content = renderImage(grid, SceneGeometry.objects)
                 })
                 timer.start()
             }

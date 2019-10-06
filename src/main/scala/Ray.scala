@@ -3,6 +3,8 @@ package rayTracing
 import data._
 import geometricObject._
 
+case class RayHit(dis: Double, obj: GeometricObject)
+
 class Ray private(private val src: Vect3, private val dir: Vect3) {
 
     def source = src
@@ -16,42 +18,48 @@ class Ray private(private val src: Vect3, private val dir: Vect3) {
         val length = (lsrc.point - pointOfHit).mag
         val dir = lsrc.point - pointOfHit
         val lightRay = Ray(pointOfHit + (dir.normalize * 0.00001), dir)
-        val (dShadow, objShadow) = lightRay.trace(objects)
+        lightRay.trace(objects) match {
+            case None => {
+                // light ray hit nothing
+                val shading = dir.normalize * obj.getNormal(this)
 
-        return if (dShadow >= length || dShadow == -1) {
-            // dNew >= length means theres nothing between the light and the point
-            // dNew == -1 means theres nothing at all on this ray
-            // also nothing blocking the light
-            //println(s"$dNew, $objNew $pointOfHit, ${lsrc.point - pointOfHit}")
+                require(-1 <= shading && shading <= 1, s"shading should be in [0, 1], instead $shading")
 
-            val shading = dir.normalize * obj.getNormal(this)
+                lsrc.applyColor(obj.color * math.abs(shading))  
+            }
+            case Some(h) => {
+                if (h.dis >= length) {
+                    // light ray hit something after the light
+                    val shading = dir.normalize * obj.getNormal(this)
 
-            require(-1 <= shading && shading <= 1, s"shading should be in [0, 1], instead $shading")
+                    require(-1 <= shading && shading <= 1, s"shading should be in [0, 1], instead $shading")
 
-            lsrc.applyColor(obj.color * math.abs(shading))         
-        }
-        else {
-            DColor(0, 0, 0) // in the shadow
+                    lsrc.applyColor(obj.color * math.abs(shading)) 
+                }
+                else {
+                    DColor(0, 0, 0)
+                }
+            }
         }
     }
 
-    private def trace(objects: Array[GeometricObject]): (Double, GeometricObject) = {
+    private def trace(objects: Array[GeometricObject]): Option[RayHit] = {
 
-        def intersectionFunc(geometry: GeometricObject): Double = {
-            geometry.intersection(this)
+        def intersectionFunc(geometry: GeometricObject): Option[RayHit] = {
+            geometry.intersection(this) match {
+                // dont hit itself
+                case Some(d) => if (d < 0.000001) None else Some(RayHit(d, geometry))
+                case None => None
+            }
         }
 
-        //val solutionExists = (x: (Double, GeometricObject)) => x._1 >= 0 // funcs return -1 on failure, this weeds that out
-
-        val distances: Array[(Double, GeometricObject)] = objects map intersectionFunc zip objects filter (_._1 > 0.000001) 
+        val distances: Array[RayHit] = SceneGeometry.objects.map(intersectionFunc).filter(x => x != None).map(_.get)
         // solutionExists at some distance (not colliding with itself)
 
-        val minFunc = (a: (Double, GeometricObject), b: (Double, GeometricObject)) => if (a._1 < b._1) a else b
-
-        return if (distances.length > 0) distances.reduce(minFunc) else (-1, null)
+        if (distances.length > 0) Some(distances.reduce((a, b) => if (a.dis < b.dis) a else b)) else None
     }
 
-    def traceAndHitToDisplay(objects: Array[GeometricObject], lsrc: LightSource, counter: Int = 0): (Double, DColor) = {
+    def traceAndHitToDisplay(lsrc: LightSource, counter: Int = 0): (Double, DColor) = {
         /*
          * Find nearest point of intersection and return the color of the said object
          * If the object is reflective, reflect and find the next intersection
@@ -59,25 +67,27 @@ class Ray private(private val src: Vect3, private val dir: Vect3) {
          *
          * Note: returns (-1, null) upon failure aka not hitting something
          */
-        val (d, obj) = trace(objects)
-        if (d == -1) {
-            return (Double.PositiveInfinity, DColor(0, 0, 0)) // nothing hit
+        val hit: RayHit = trace(SceneGeometry.objects) match {
+            case Some(value) => value
+            case None => {
+                return (Double.PositiveInfinity, DColor(0, 0, 0)) // nothing hit
+            }
         }
 
         if (counter > 3) {
             // overflow protection
             // just return the objects color + shading
 
-            val color = colorShading(objects, lsrc, d, obj)
-            return (d, color)
+            val color = colorShading(SceneGeometry.objects, lsrc, hit.dis, hit.obj)
+            return (hit.dis, color)
         }
         
-        val rReflected: Ray = obj.reflectRay(this) match {
+        val rReflected: Ray = hit.obj.reflectRay(this) match {
             case Some(r) => r
-            case None => return (d, colorShading(objects, lsrc, d, obj))
+            case None => {return (hit.dis, colorShading(SceneGeometry.objects, lsrc, hit.dis, hit.obj)); ???}
         }
 
-        val (dNext, colorNext) = rReflected.traceAndHitToDisplay(objects, lsrc, counter + 1)
+        val (dNext, colorNext) = rReflected.traceAndHitToDisplay(lsrc, counter + 1)
 
         /*
          * given a ray reflected of the surface of this objects,
@@ -88,9 +98,9 @@ class Ray private(private val src: Vect3, private val dir: Vect3) {
          * and R of the color of the ray being reflected
          */
         
-        val shadedColor = colorShading(objects, lsrc, d, obj)
+        val shadedColor = colorShading(SceneGeometry.objects, lsrc, hit.dis, hit.obj)
 
-        val colorReflected = (colorNext * obj.reflectivity) + (shadedColor * (1 - obj.reflectivity))
+        val colorReflected = (colorNext * hit.obj.reflectivity) + (shadedColor * (1 - hit.obj.reflectivity))
 
         return if (dNext == Double.PositiveInfinity) (dNext, shadedColor) else (dNext, colorReflected)
     }

@@ -14,7 +14,7 @@ class Plane(private val n: Vect3, private val d: Double, val color: DColor, val 
         return n.normalize
     }
 
-    def intersection(r: Ray): Double = {
+    def intersection(r: Ray): Option[Double] = {
         /* 
          * r0   =   start point of ray
          * r =   direction from start
@@ -27,8 +27,8 @@ class Plane(private val n: Vect3, private val d: Double, val color: DColor, val 
 
          // see CS notebook for math
 
-         val tmp = (d - (n * r.source)) / (n * r.direction)
-         return if (tmp == Double.PositiveInfinity || tmp == Double.NegativeInfinity) -1 else tmp
+        val tmp = (d - (n * r.source)) / (n * r.direction)
+        if (tmp == Double.PositiveInfinity || tmp == Double.NegativeInfinity || tmp < 0) None else Some(tmp)
     }
 
     override def toString(): String = "Plane"
