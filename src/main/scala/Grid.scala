@@ -39,9 +39,9 @@ class Grid(val src: Vect3, val forward: Vect3, val up: Vect3, val side: Int) {
 
         val ray = Ray(src, getPoint(i, j) - src)
 
-        val (t, color) = ray.traceAndHitToDisplay(lsrc)
-
-        // t of -1 represents nothing was hit
-        return if (t == -1) DColor(0, 0, 255) else color // why is it blue?
+        ray.traceAndHitToDisplay(lsrc) match {
+            case Some(color) => color
+            case None => DColor(0, 0, 0)
+        }
     }
 }
