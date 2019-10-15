@@ -25,8 +25,8 @@
      </plane>-->
      <triangle>
         <a>0,0,-30</a>
-        <b>0,4,-30</b>
-        <c>4,0,-30</c>
+        <b>0,100,-30</b>
+        <c>-140,0,-140</c>
         <color>255,0,255</color>
         <reflectivity>0</reflectivity>
      </triangle>

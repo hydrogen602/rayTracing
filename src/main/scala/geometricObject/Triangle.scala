@@ -13,7 +13,7 @@ class Triangle(private val a: Vect3, private val b: Vect3, private val c: Vect3,
     // idk if that math works
 
     private val ab: Vect3 = b - a
-    private val ac: Vect3 = c - a
+    private val ca: Vect3 = a - c
     private val bc: Vect3 = c - b
 
     println("triangle")
@@ -44,9 +44,14 @@ class Triangle(private val a: Vect3, private val b: Vect3, private val c: Vect3,
             case None => None
             case Some(distance) => {
                 val p = r.extend(distance)
-                val line = Line(p, ab)
+
+                val lines = Seq(p - a, p - b, p - c)
+                val crosses = Seq(ab, bc, ca).zip(lines).map(l => (l._1 x l._2).normalize)
+                val matchUp = crosses(0) == crosses(1) && crosses(1) == crosses(2)
+
+
                 
-                ???
+                if (matchUp) Some(distance) else None
             }
         }
     }
