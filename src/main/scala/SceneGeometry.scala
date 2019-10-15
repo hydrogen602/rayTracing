@@ -36,10 +36,22 @@ object SceneGeometry {
     
           new Plane(normal, d, color, refl)
         }
+
+        def generateTriangle(n: xml.Node): Triangle = {
+          val a: Vect3 = stringToVect((n \ "a").text)
+          val b: Vect3 = stringToVect((n \ "b").text)
+          val c: Vect3 = stringToVect((n \ "c").text)
+          val color: DColor = stringToDColor((n \ "color").text)
+          val refl: Double = (n \ "reflectivity").text.toDouble
+          require(0 <= refl && refl <= 1, "Reflectivity must be in range [0, 1]")
+    
+          new Triangle(a, b, c, color, refl)
+        }
     
         val xmlObjects = xml.XML.loadFile(xmlFileName)
         val spheres = (xmlObjects \ "sphere").map(generateSphere).toArray
         val planes = (xmlObjects \ "plane").map(generatePlane).toArray
-        spheres ++ planes
+        val triangles = (xmlObjects \ "triangle").map(generateTriangle).toArray
+        spheres ++ planes ++ triangles
     }
 }

@@ -93,10 +93,8 @@ object Main {
             title = "Ray Tracing 3"
             scene = new Scene(config.side.toDouble, config.side.toDouble) {
 
-                def stop() {
-                  timer.stop()
-                }
-          
+              val animated = false
+              if (animated) {
                 val timer = AnimationTimer(time => {
                   val deltaT: Double = if (lastT > 0) {
                     val diff = time - lastT
@@ -115,7 +113,18 @@ object Main {
 
                   content = renderImage(grid, SceneGeometry.objects)
                 })
+
+                def stop() {
+                  timer.stop()
+                }
+
                 timer.start()
+              }
+              else {
+                val (raySrc, forwardVect, upVect) = spin(0)
+                val grid = new Grid(raySrc, forwardVect, upVect, config.side)
+                content = renderImage(grid, SceneGeometry.objects)
+              }
             }
         }
     }

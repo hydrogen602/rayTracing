@@ -3,9 +3,6 @@ package rayTracing.geometricObject
 import rayTracing._
 import rayTracing.data._
 
-import scala.languageFeature.reflectiveCalls
-
-
 class Plane(private val n: Vect3, private val d: Double, val color: DColor, val reflectivity: Double) extends GeometricObject {
     require(0 <= reflectivity && reflectivity <= 1)
     // 0 is matte, 1 is a mirror

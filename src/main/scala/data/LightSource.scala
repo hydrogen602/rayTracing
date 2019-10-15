@@ -1,7 +1,5 @@
 package rayTracing.data
 
-import rayTracing._
-
 class LightSource private(val point: Vect3, val color: DColor) {
 
     def applyColor(d: DColor): DColor = {

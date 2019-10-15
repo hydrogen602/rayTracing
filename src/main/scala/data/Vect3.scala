@@ -45,7 +45,7 @@ class Vect3 private(val x: Double, val y: Double, val z: Double) {
     def unary_-(): Vect3 = Vect3(-x, -y, -z)
 
     def ==(d: Vect3): Boolean = {
-        math.abs(x - d.x) < 0.001 && math.abs(y - d.y) < 0.001 && math.abs(z - d.z) < 0.001
+        math.abs(x - d.x) < 0.0001 && math.abs(y - d.y) < 0.0001 && math.abs(z - d.z) < 0.0001
     }
 
     def !=(d: Vect3): Boolean = {

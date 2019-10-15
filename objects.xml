@@ -17,12 +17,19 @@
         <color>255,255,0</color>
         <reflectivity>0</reflectivity>
     </sphere>
-    <plane>
+    <!--<plane>
         <normal>0,-0.3,-1</normal>
         <distance>40</distance>
         <color>0,0,255</color>
         <reflectivity>0.5</reflectivity>
-     </plane>
+     </plane>-->
+     <triangle>
+        <a>0,0,-30</a>
+        <b>0,4,-30</b>
+        <c>4,0,-30</c>
+        <color>255,0,255</color>
+        <reflectivity>0</reflectivity>
+     </triangle>
      <!--<plane>
         <normal>-1,-0.5,0</normal>
         <distance>120</distance>
